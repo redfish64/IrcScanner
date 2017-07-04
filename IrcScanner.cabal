@@ -1,4 +1,4 @@
-Name:                IrcScanner2
+Name:                IrcScanner
 Version:             0.1
 Synopsis:            Project Synopsis Here
 Description:         Project Description Here
@@ -10,7 +10,7 @@ Category:            Web
 Build-type:          Simple
 Cabal-version:       >=1.2
 
-Executable IrcScanner2
+Executable IrcScanner
   hs-source-dirs: src
   main-is: Main.hs
 
@@ -18,12 +18,19 @@ Executable IrcScanner2
                 QuickCheck >= 2.9.2,
                 base                      >= 4     && < 5,
                 bytestring                >= 0.9.1 && < 0.11,
+                containers >= 0.5.7.1,
+                dlist >= 0.8.0.2,
+                either >= 4.4.1.1,
                 hspec >= 2.2.4,
+                lens >= 4.14,
                 monad-control             >= 1.0   && < 1.1,
                 mtl                       >= 2     && < 3,
-                regex-pcre,
+                parsec >= 3.1.11,
                 snap-core                 >= 1.0   && < 1.1,
-                snap-server               >= 1.0   && < 1.1
+                snap-server               >= 1.0   && < 1.1,
+                text >= 1.2.2.1,
+                text-icu                  >= 0.7.0.1,
+                transformers >= 0.5.2.0
   if impl(ghc >= 6.12.0)
     ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
                  -fno-warn-unused-do-bind
