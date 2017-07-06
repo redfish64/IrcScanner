@@ -1,4 +1,4 @@
-module Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCacheIndexResult, MatcherType(..),mkMatcher,IState(..),IConfig(..),IST) where
+module Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCacheIndexResult, MatcherType(..),mkMatcher,IState(..),IConfig(..),IST,emptyIState) where
 
 import Data.Text.ICU as I
 import Control.Monad.Trans.Reader
@@ -84,7 +84,10 @@ emptyCacheIndexResult i = CachedIndexResult i S.empty 0
 data IState = IState {
   rcirs :: [CachedIndexResult],
   rfile :: Seq Text
-  }
+  } deriving (Show)
+
+emptyIState :: IState
+emptyIState = IState { rcirs = [], rfile = S.empty }
 
 data IConfig = IConfig
   {

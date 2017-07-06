@@ -1,4 +1,4 @@
-module Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines) where
+module Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState) where
 
 import Types
 import Data.Sequence as S
@@ -86,13 +86,11 @@ updateCachedIndexResult f cir
       | otherwise =
         let
           line = (cendLine cir)
-          cir' =
-            let matches = (runMatcher (imatcher . cindex $ cir) (f `S.index` line))
-            in
-              cir { cranges =
+          matches = (runMatcher (imatcher . cindex $ cir) (f `S.index` line))
+          cir' = cir { cranges =
                       (cranges cir) >< (fromList (fmap (\(s,e) -> (Range (Pos line s) (Pos line e))) matches)) }
         in
-          cir' { cendLine = (cendLine cir') + 1 }
+          updateCachedIndexResult f (cir' { cendLine = (cendLine cir') + 1 })
           
                                     
     
