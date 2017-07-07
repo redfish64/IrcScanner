@@ -9,7 +9,6 @@ import           Snap.Http.Server
 main :: IO ()
 main =
   do
-    init
     quickHttpServe site
 
 site :: Snap ()
