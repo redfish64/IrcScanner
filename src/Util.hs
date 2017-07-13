@@ -1,4 +1,5 @@
-module Util(replaceLeft,parseRegexWithFlags) where
+{-# LANGUAGE OverloadedStrings #-}
+module Util(replaceLeft,parseRegexWithFlags,justOrError) where
 
 import Data.Text
 import Data.Text.ICU
@@ -58,3 +59,12 @@ _test =
     it "fails properly" $ do
          (parseRegexWithFlags "f\\fooi")
         `shouldSatisfy` isLeft
+
+justOrError :: Text -> Maybe x -> Either Text x
+justOrError s Nothing = Left s
+justOrError _ (Just x) = Right x
+
+ 
+-- readFile :: Text -> EitherT IO Text
+-- readFile = 
+

@@ -1,4 +1,22 @@
-module Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCacheIndexResult, MatcherType(..),mkMatcher,IState(..),IConfig(..),IST,emptyIState) where
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
+module Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCacheIndexResult, MatcherType(..),mkMatcher,IState(..),IConfig(..),IST,EIST,emptyIState,
+            idisplayName,
+            imatcher,
+            prow,
+            pcol,
+            rstartPos,
+            rendPos,
+            cindex,
+            cranges,
+            cendLine,
+            rcirs,
+            rfile,
+            cstate,
+            IrcSnaplet(..),
+            iheist,
+            iconfig
+            ) where
 
 import Data.Text.ICU as I
 import Control.Monad.Trans.Reader
@@ -9,6 +27,10 @@ import Test.Hspec
 import Data.Either(isLeft)
 import Util
 import Data.IORef
+import Control.Lens.TH
+import Control.Monad.Trans.Either(EitherT)
+import           Snap
+import           Snap.Snaplet.Heist
 
 data MatcherType = ExactMatcher | IgnoreCaseMatcher | RegexMatcher
    deriving (Show, Eq)
@@ -24,9 +46,6 @@ mkMatcher RegexMatcher val =
   
 mkRegexMatcher :: [MatchOption] -> Text -> (Either Text Matcher)
 mkRegexMatcher mo r = replaceLeft (pack . show) (regex' mo r)
-
-    
-      
 
 
 _test :: IO ()
@@ -50,21 +69,26 @@ _test =
 
 --this is used to form keywords agains the logger
 data Index = Index {
-  idisplayName :: Text,
-  imatcher :: Matcher
+  _idisplayName :: Text,
+  _imatcher :: Matcher
   } deriving (Show)
+
+makeLenses ''Index
 
 
 data Pos = Pos {
-  prow :: Int,
-  pcol :: Int
+  _prow :: Int,
+  _pcol :: Int
   } deriving (Show, Eq)
+
+makeLenses ''Pos
 
 data Range = Range {
-  rstartPos :: Pos,
-  rendPos :: Pos
+  _rstartPos :: Pos,
+  _rendPos :: Pos
   } deriving (Show, Eq)
 
+makeLenses ''Range
 
 
 --This is a cache of results from running indexes against
@@ -72,27 +96,43 @@ data Range = Range {
 --we don't use straight memoization because we need to
 --incremenetally update the results when new lines come in
 data CachedIndexResult = CachedIndexResult {
-  cindex :: Index,
-  cranges :: Seq Range,
-  cendLine :: Int -- the line number up to which we have scanned
+  _cindex :: Index,
+  _cranges :: Seq Range,
+  _cendLine :: Int -- the line number up to which we have scanned
   } deriving (Show)
+
+makeLenses ''CachedIndexResult
 
 
 emptyCacheIndexResult :: Index -> CachedIndexResult
 emptyCacheIndexResult i = CachedIndexResult i S.empty 0
 
 data IState = IState {
-  rcirs :: [CachedIndexResult],
-  rfile :: Seq Text
+  _rcirs :: [CachedIndexResult],
+  _rfile :: Seq Text
   } deriving (Show)
 
+makeLenses ''IState
+
 emptyIState :: IState
-emptyIState = IState { rcirs = [], rfile = S.empty }
+emptyIState = IState { _rcirs = [], _rfile = S.empty }
 
 data IConfig = IConfig
   {
-    cstate :: IORef IState
-  } 
+    _cstate :: IORef IState
+  }
+
+makeLenses ''IConfig  
 
 type IST = ReaderT IConfig
+type EIST a = EitherT Text (IST a)
 
+data IrcSnaplet = IrcSnaplet {
+  _iheist :: Snaplet (Heist IrcSnaplet),
+  _iconfig :: IConfig
+  }
+
+makeLenses ''IrcSnaplet
+
+instance HasHeist IrcSnaplet where
+  heistLens = subSnaplet iheist

@@ -7,7 +7,8 @@ import Control.Monad.Reader
 import Control.Exception
 import Text.Printf
 import Bot
- 
+import Index
+  
 server = "irc.freenode.org"
 port   = 6667
 chan   = "#tutbot-testing"
@@ -61,8 +62,8 @@ listen h = forever $ do
 eval :: String -> Net ()
 eval     "!quit"               = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
 eval x | "!id " `isPrefixOf` x = privmsg (drop 4 x)
-eval x | "!index" `isPrefixOf` x = --tryIndex x
-eval     _                     = return () -- ignore everything else
+eval x | "!index" `isPrefixOf` x = tryIndex x
+eval _                     = return () -- ignore everything else
  
 -- Send a privmsg to the current chan + server
 privmsg :: String -> Net ()

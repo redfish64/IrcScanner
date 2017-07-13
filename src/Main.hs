@@ -1,26 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import           Control.Applicative
-import           Snap.Core
-import           Snap.Util.FileServe
-import           Snap.Http.Server
+import           Snap
+import   IrcSnaplet
+import Types
+import Data.IORef(newIORef)
+import Index
+import Data.Text as T
 
 main :: IO ()
 main =
   do
-    quickHttpServe site
+    es <- _demoIState
+    case es of
+      Left x -> putStrLn("Error: " ++ (unpack x))
+      Right s ->
+        do
+          i <- newIORef s
+          (_, site, _) <- runSnaplet Nothing $ ircSnapletInit $ IConfig i
+          quickHttpServe site
 
-site :: Snap ()
-site =
-    ifTop (writeBS "hello world") <|>
-    route [ ("foo", writeBS "bar")
-          , ("echo/:echoparam", echoHandler)
-          ] <|>
-    dir "src" (serveDirectory ".")
-
-echoHandler :: Snap ()
-echoHandler = do
-    param <- getParam "echoparam"
-    maybe (writeBS "must specify echo/param in URL")
-          writeBS param
