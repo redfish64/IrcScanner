@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState, _demoIState,lookupCir) where
+module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState, _demoIState,lookupCir) where
 
-import Types
+import IrcScanner.Types
 import Data.Sequence as S
 import Control.Monad.Trans.Reader as R
 import Data.Text.ICU as I
 import Data.Text as T
 import Control.Monad.State as S
-import Util
+import IrcScanner.Util
 import Test.Hspec
 import Data.Maybe (fromMaybe)
 import Data.Foldable (toList)
@@ -15,23 +15,38 @@ import Control.Monad.IO.Class(liftIO)
 import Data.IORef
 import qualified Control.Lens as L
 import Control.Monad.Trans.Either
-import Control.Exception(try, SomeException)
-import qualified Data.Text.IO as DTI
---import Data.List.Split
+--import Control.Exception(try, SomeException)
+--import qualified Data.Text.IO as DTI
+import Parser.Irssi.Log.Types(LogType(..),MessageContent)
+import Parser.Irssi.Log.Util.Import(importIrssiData)
+import Data.Time.LocalTime(hoursToTimeZone,localTimeToUTC)
+import qualified Data.List as LI(find)
 
 --tries running an index against the log and returns a result (without saving it)
 tryIndex :: Index -> IST IO [Range]
 tryIndex i =
   do
     s <- getIState
-    let
-      f = (L.view rfile s)
-      cir = updateCachedIndexResult f (emptyCacheIndexResult i)
+    let cir =  buildCachedIndexResult s i
       in return (toList (L.view cranges cir))
 
 --adds and saves an index to state
 addIndex :: Index -> IST IO ()
 addIndex x = addIndexes [x]
+
+--builds a complete cached index result from scratch
+buildCachedIndexResult :: IState -> Index -> CachedIndexResult
+buildCachedIndexResult s i =
+  let
+    f = (L.view sfile s)
+  in updateCachedIndexResult (L.view flines f) (emptyCacheIndexResult i)
+
+
+-- returns only text from essages and actions
+getIrssiMessageText :: LogType -> MessageContent
+getIrssiMessageText (Message _ _ _ mc) = mc
+getIrssiMessageText (Action _ _ mc) = mc
+getIrssiMessageText _ = ""
 
 
 --adds and saves an index to state given text of a matcher
@@ -47,17 +62,12 @@ addIndex' n t r =
         return i
 
 addFile :: Text -> EIST IO ()
-addFile f =
+addFile f = 
   do
-    
-    text <-
-      (EitherT $ liftIO $
-       (do
-           x <- (try $ DTI.readFile (unpack f) :: IO (Either SomeException Text))
-           return $ (replaceLeft (pack . show) x)
-       )
-      )
-    (lift $ addFileLines  $ splitOn "\n" text) 
+    c <- lift $ ask
+    d <- liftIO $ importIrssiData (unpack f)
+    lift $ addFileLines $ fmap (\(t,l) -> ILine (localTimeToUTC (_ctimeZone c) t) l) d
+
 
 --convertMonadEither :: Monad m => m (Either a x) -> m (Either 
 -- toEIST = undefined
@@ -65,8 +75,9 @@ addFile f =
 --adds multiple indexes to state
 addIndexes :: [Index] -> IST IO ()
 addIndexes is = updateIState
-  (\s -> (s { _rcirs = fmap (\i -> (updateCachedIndexResult (_rfile s) (emptyCacheIndexResult i))) is
-                     ++ (_rcirs s) },()))
+  (\s -> (s { _scirs =
+              fmap (buildCachedIndexResult s) is
+              ++ (_scirs s) },()))
   
 
 getIState :: IST IO IState
@@ -86,7 +97,7 @@ getIndexes :: IST IO [Index]
 getIndexes =
   do
     s <- getIState
-    return $ fmap _cindex (_rcirs s)
+    return $ fmap _cindex (_scirs s)
 
 
 --deletes index from memory and cached results
@@ -97,31 +108,34 @@ deleteIndex name =
   updateIState
   (\s ->
      let
-       s' = s { _rcirs = Prelude.filter (\cir -> (_idisplayName . _cindex) cir == name) (_rcirs s) }
+       s' = s { _scirs = Prelude.filter (\cir -> (_idisplayName . _cindex) cir == name) (_scirs s) }
        in
-       (s',Prelude.length (_rcirs s) == Prelude.length (_rcirs s'))
+       (s',Prelude.length (_scirs s) == Prelude.length (_scirs s'))
   )
   
 
-addFileLine :: Text -> IST IO ()
+addFileLine :: ILine -> IST IO ()
 addFileLine l = addFileLines [l]
 
-addFileLines :: [Text] -> IST IO ()
-addFileLines ls = updateIState
-  (\s -> (refreshIndexCache (s { _rfile = (_rfile s) >< (fromList ls) }),()))
+addFileLines :: [ILine] -> IST IO ()
+addFileLines ls =
+  updateIState
+     (\s -> (refreshIndexCache (L.over (sfile . flines) (\cls -> cls >< (fromList ls)) s), ()))
 
 refreshIndexCache :: IState -> IState
 refreshIndexCache is =
-  is { _rcirs = fmap (updateCachedIndexResult (_rfile is)) (_rcirs is) }
+         let ls = (L.view (sfile . flines) is)
+         in
+           L.over scirs (fmap (updateCachedIndexResult ls)) is
 
-
-updateCachedIndexResult :: Seq Text -> CachedIndexResult -> CachedIndexResult
+updateCachedIndexResult :: Seq ILine -> CachedIndexResult -> CachedIndexResult
 updateCachedIndexResult f cir
       | (_cendLine cir) >= (S.length f) = cir
       | otherwise =
         let
           line = (_cendLine cir)
-          matches = (runMatcher (_imatcher . _cindex $ cir) (f `S.index` line))
+          lineText = getIrssiMessageText (_llogType (f `S.index` line))
+          matches = runMatcher (_imatcher . _cindex $ cir) lineText
           cir' = cir { _cranges =
                       (_cranges cir) >< (fromList (fmap (\(s,e) -> (Range (Pos line s) (Pos line e))) matches)) }
         in
@@ -154,18 +168,18 @@ _demoIState :: IO (Either Text IState)
 _demoIState =
   do
     i <- newIORef $ emptyIState
-    runReaderT (runEitherT createDemo) (IConfig i)
+    runReaderT (runEitherT createDemo) (IConfig i (hoursToTimeZone 0))
   where
     createDemo :: EIST IO IState 
     createDemo = 
       do
         addFile "test.log"
-        addIndex' "AutoNomic" RegexMatcher "/\b(autonomic|an)\b/"
+        addIndex' "AutoNomic" RegexMatcher "/\b(autonomic|an)\b/i"
+        addIndex' "Cool" RegexMatcher "/cool/i"
         
         c <- lift ask
         s <- liftIO $ readIORef (_cstate c)
         return s
-        
 
 
 _test :: IO ()
@@ -182,4 +196,5 @@ _test =
 
 
 lookupCir :: IState -> Text -> Maybe CachedIndexResult
-lookupCir = undefined
+lookupCir s n = 
+  LI.find ((== n) . (L.view (cindex . idisplayName))) (_scirs s)

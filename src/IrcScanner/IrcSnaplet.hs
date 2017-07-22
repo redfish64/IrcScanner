@@ -1,35 +1,32 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-module IrcSnaplet where
+module IrcScanner.IrcSnaplet where
 
-import Types
+import IrcScanner.Types
 import           Snap
 import           Snap.Snaplet.Heist
-import           Control.Lens
-import Control.Monad.IO.Class(liftIO)
---import Control.Monad.Trans(lift)
-import Control.Monad.Reader(ask)
-import Data.IORef(readIORef)
-import Heist.Interpreted
-import Heist
-import Data.Map.Syntax((##))
-import Data.Text(append,Text)
-import Control.Monad.Trans.Either (runEitherT,left, EitherT(..))
-import Control.Monad.Trans (lift)
-import Data.ByteString(ByteString)
-import Data.Text.Encoding
-import IndexPage
-import LookupPage
+import IrcScanner.IndexPage
+import IrcScanner.LookupPage
+import IrcScanner.RetrievePage
+import IrcScanner.LoadRowsPage
+import Data.Text(pack)
+--import           Control.Lens
+import Snap.Util.FileServe
+import IrcScanner.SnapUtil
 
 ircSnapletInit :: IConfig -> SnapletInit IrcSnaplet IrcSnaplet
-ircSnapletInit c = makeSnaplet "irc" "Irc snaplet" Nothing $ do
+ircSnapletInit c = makeSnaplet "irc" "Irc Scanner thingy" Nothing $ do
   h <- nestSnaplet "heist" iheist $ heistInit "templates"
   --modifyHeistState $ bindAttributeSplices [("main-textbox", mainTextboxAttributeSplice)]
+  getEnvironment >>= printInfo . pack . ("IrcSnaplet: " ++)
   addRoutes [
-    ("", indexHandler),
-    ("lookup", lookupHandler)
+    ("files",  serveDirectory "static"),
+    ("retrieve", handleETHandler $ retrieveHandler),
+    ("lookup", lookupHandler),
+    ("loadRows", handleETHandler $ loadRowsHandler),
+    ("", indexHandler)
             ]
-  return $ IrcSnaplet { _iheist = h,  _iconfig = c }
+  return $ IrcSnaplet h c 0
 
   
 

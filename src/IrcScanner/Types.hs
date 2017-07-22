@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-module Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCacheIndexResult, MatcherType(..),mkMatcher,IState(..),IConfig(..),IST,EIST,emptyIState,
+module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCacheIndexResult, MatcherType(..),mkMatcher,IState(..),IConfig(..),IST,EIST,emptyIState,ILine(..),
             idisplayName,
             imatcher,
             prow,
@@ -10,12 +10,18 @@ module Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCach
             cindex,
             cranges,
             cendLine,
-            rcirs,
-            rfile,
+            scirs,
+            sfile,
             cstate,
             IrcSnaplet(..),
             iheist,
-            iconfig
+            iconfig,
+            ltime,
+            llogType,
+            fcurrDay,
+            flines,
+            ctimeZone,
+            hacktest
             ) where
 
 import Data.Text.ICU as I
@@ -25,12 +31,16 @@ import Data.Sequence as S
 import Data.Text
 import Test.Hspec
 import Data.Either(isLeft)
-import Util
+import IrcScanner.Util
 import Data.IORef
 import Control.Lens.TH
 import Control.Monad.Trans.Either(EitherT)
 import           Snap
 import           Snap.Snaplet.Heist
+import Data.Time.Clock
+import Data.Time.Calendar(Day,fromGregorian)
+import Data.Time.LocalTime
+import Parser.Irssi.Log.Types(LogType)
 
 data MatcherType = ExactMatcher | IgnoreCaseMatcher | RegexMatcher
    deriving (Show, Eq)
@@ -107,19 +117,35 @@ makeLenses ''CachedIndexResult
 emptyCacheIndexResult :: Index -> CachedIndexResult
 emptyCacheIndexResult i = CachedIndexResult i S.empty 0
 
+data ILine = ILine {
+  _ltime :: UTCTime,
+  _llogType :: LogType
+  } deriving (Show)
+
+makeLenses ''ILine
+
+data IFile = IFile {
+  _flines :: Seq ILine,
+  _fcurrDay :: Day   --latest day in the file
+            -- (in irssi format, only the time of lines are displayed, and when the day changes, a line indicating the fact is printed)
+  } deriving (Show)
+
+makeLenses ''IFile
+
 data IState = IState {
-  _rcirs :: [CachedIndexResult],
-  _rfile :: Seq Text
+  _scirs :: [CachedIndexResult],
+  _sfile :: IFile --eventually maybe we'll support multiple files
   } deriving (Show)
 
 makeLenses ''IState
 
 emptyIState :: IState
-emptyIState = IState { _rcirs = [], _rfile = S.empty }
+emptyIState = IState { _scirs = [], _sfile = IFile { _flines = S.empty, _fcurrDay = fromGregorian 1970 1 1 } }
 
 data IConfig = IConfig
   {
-    _cstate :: IORef IState
+    _cstate :: IORef IState,
+    _ctimeZone :: TimeZone
   }
 
 makeLenses ''IConfig  
@@ -129,7 +155,8 @@ type EIST a = EitherT Text (IST a)
 
 data IrcSnaplet = IrcSnaplet {
   _iheist :: Snaplet (Heist IrcSnaplet),
-  _iconfig :: IConfig
+  _iconfig :: IConfig,
+  _hacktest :: Integer
   }
 
 makeLenses ''IrcSnaplet

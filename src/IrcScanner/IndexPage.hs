@@ -1,6 +1,7 @@
-module IndexPage where
+{-# LANGUAGE OverloadedStrings #-}
+module IrcScanner.IndexPage where
 
-import Types
+import IrcScanner.Types
 import           Snap
 import           Snap.Snaplet.Heist
 import           Control.Lens
@@ -11,7 +12,7 @@ import Data.IORef(readIORef)
 import Heist.Interpreted
 import Heist
 import Data.Map.Syntax((##))
-import Data.Text(append)
+import Data.Text(append,pack)
 -- import Control.Monad.Trans.Either (runEitherT,left, EitherT(..))
 -- import Control.Monad.Trans (lift)
 -- import Data.ByteString(ByteString)
@@ -23,12 +24,17 @@ splicesFromCIR cir =
     "keywordURL" ## (textSplice $ "lookup?name=" `append` view (cindex . idisplayName) cir)
     "keyword" ## textSplice $ view (cindex . idisplayName) cir
 
-allSplices :: [CachedIndexResult] -> Splices (SnapletISplice IrcSnaplet)
-allSplices cirs = "allIndexes" ## (mapSplices (runChildrenWith . splicesFromCIR) cirs)
+allSplices :: [CachedIndexResult] -> Integer -> Splices (SnapletISplice x)
+allSplices cirs ht =
+  do
+    "allIndexes" ## (mapSplices (runChildrenWith . splicesFromCIR) cirs)
+    "hacktest" ## textSplice $ pack $ show ht
 
-indexHandler :: Handler IrcSnaplet IrcSnaplet ()
+
+indexHandler :: HasHeist x => Handler x IrcSnaplet ()
 indexHandler = do
+  modifySnapletState $ over (snapletValue . hacktest) (+1)
   s <- ask
   st <- liftIO $ readIORef (view (iconfig . cstate) s)
   
-  renderWithSplices "index" (allSplices (_rcirs st))
+  renderWithSplices "index" (allSplices (_scirs st) (_hacktest s))

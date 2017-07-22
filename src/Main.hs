@@ -2,11 +2,12 @@
 module Main where
 
 import           Snap
-import   IrcSnaplet
-import Types
+import IrcScanner.IrcSnaplet
+import IrcScanner.Types
 import Data.IORef(newIORef)
-import Index
+import IrcScanner.Index
 import Data.Text as T
+import Data.Time
 
 main :: IO ()
 main =
@@ -17,6 +18,6 @@ main =
       Right s ->
         do
           i <- newIORef s
-          (_, site, _) <- runSnaplet Nothing $ ircSnapletInit $ IConfig i
+          (_, site, _) <- runSnaplet Nothing $ ircSnapletInit $ IConfig i (hoursToTimeZone 0) 
           quickHttpServe site
 

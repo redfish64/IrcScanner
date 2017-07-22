@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Util(replaceLeft,parseRegexWithFlags,justOrError) where
+module IrcScanner.Util(replaceLeft,parseRegexWithFlags,justOrError,sliceSeq,readOrLeft,mapInd) where
 
 import Data.Text
 import Data.Text.ICU
@@ -7,8 +7,9 @@ import Text.Parsec
 import Text.Parsec.Text
 import Test.Hspec
 import Data.Either(isLeft)
-
-
+import qualified Data.Sequence as S
+import Control.Monad.Trans.Either(EitherT(..))
+import Text.Read(readMaybe)
 
 replaceLeft :: (a -> b) -> Either a c -> Either b c
 replaceLeft f e =
@@ -64,7 +65,15 @@ justOrError :: Text -> Maybe x -> Either Text x
 justOrError s Nothing = Left s
 justOrError _ (Just x) = Right x
 
- 
+sliceSeq :: Int -> Int -> S.Seq x -> S.Seq x
+sliceSeq from count xs = S.take count (S.drop from xs)
+
+readOrLeft :: (Monad x, Read y) => Text -> Text -> EitherT Text x y
+readOrLeft errMsg val = EitherT $ return (justOrError errMsg $ readMaybe (unpack val))
+
 -- readFile :: Text -> EitherT IO Text
 -- readFile = 
 
+-- variant of map that passes each element's index as a second argument to f
+mapInd :: (a -> Int -> b) -> [a] -> [b]
+mapInd f l = Prelude.zipWith f l [0..]
