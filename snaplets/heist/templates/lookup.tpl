@@ -22,11 +22,11 @@
 	  <td>
 	    <table width="100%">
 	      <tr>
-		<td valign="top" align="left"><div class="boxExpandUp" box="">&and;</div></td>
+		<td valign="top" align="left"><div class="boxExpandUp" box=""><img src="/files/uparrow.png" /></div></td>
 		<td id='date' class='dateheader' width="100%">Loading...</td>
 	      </tr>
 	      <tr>
-		  <td valign="bottom" align="left"><div class="boxExpandDown" box="">&or;</div></td>
+		  <td valign="bottom" align="left"><div class="boxExpandDown" box=""><img src="/files/downarrow.png" /></div></td>
 		  <td id='text' width="100%"></td>
 	      </tr>
 	    </table>

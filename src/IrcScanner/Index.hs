@@ -174,8 +174,9 @@ _demoIState =
     createDemo = 
       do
         addFile "test.log"
-        addIndex' "AutoNomic" RegexMatcher "/\b(autonomic|an)\b/i"
+        addIndex' "AutoNomic" RegexMatcher "/\\bautonomic\\b/i"
         addIndex' "Cool" RegexMatcher "/cool/i"
+        addIndex' "Open/Closed Phase" RegexMatcher "/\\b(open|closed?)\\s+phase\\b/i"
         
         c <- lift ask
         s <- liftIO $ readIORef (_cstate c)

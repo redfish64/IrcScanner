@@ -10,7 +10,7 @@
       <allIndexes>
       <tr>
 	<td>
-	  <a href="${keywordURL}"><keyword/></a>...todo put individual listing here by date probably???
+	  <a href="${keywordURL}"><keyword/></a>
 	</td>
       </tr>
       </allIndexes>
