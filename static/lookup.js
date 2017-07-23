@@ -2,11 +2,12 @@
 var LOOKUP = LOOKUP || (function(){
     var _boxes = [];
     var _add_rows_for_box = 1; //rows above and below box
-    var _rows = [];
     
     return {
         init : function(init_box_size) {
 	    if(init_box_size) _add_rows_for_box = Math.trunc(init_box_size / 2);
+
+	    $( window ).scroll(LOOKUP._refreshDisplayedBoxes)
         },
 	//joins the result into separate boxes, if the lines are sequential
 	join_result : function(result) {
@@ -41,7 +42,7 @@ var LOOKUP = LOOKUP || (function(){
 		if(srow < 0) srow = 0;
 
 		if(lastBox &&
-		   lastBox.erow <= srow)
+		   lastBox.erow >= srow)
 		{
 		    lastBox.erow = erow;
 		}
@@ -51,29 +52,46 @@ var LOOKUP = LOOKUP || (function(){
 			srow: srow,
 			erow: erow,
 			rowsOffset: 0,
-			rows: []
+			rows: [],
+			loading: false
 		    }
 		    _boxes.push(lastBox);
 		}
 	    });
 				
 	},
-
+	//creates html for boxes in page after range is found (but before lines are loaded)
 	_writeBoxesInPage : function() {
+	    var $t = $("#boxtemplate");
+	    var $tr = $t.find(".boxtemplate")
 
-	    var d = $("#boxtable")
-	    d.empty()
+	    //temporarily set the class to 'boxrow' so that we can make the rows
+	    $tr.attr("class","boxrow")
+
+	    var $d = $("#boxtable")
+	    $d.empty();
 
 	    _boxes.forEach(function(box) {
-		d.append('<tr><td><div id="box" box="'+box.id+'">'
-			 +"<table><tr>"
-			 +"<td>Id "+box.id+"</td>"
-			 +"<td id='date'></td></tr>"
-			 +"<tr><td id='text'></td></tr>"
-			 +"</table>"
-			 +"</div></td></tr>");
+		$tr.attr("box",box.id);
+		$tr.find(".boxExpandUp").attr("box",box.id);
+		$tr.find(".boxExpandDown").attr("box",box.id);
+		$d.append("<tr class='boxrow' box="+box.id+">"+$tr.html()+"</tr>");
 	    });
-			   
+
+	    //after we're done making the rows, change the class back to boxtemplate
+	    //so we don't interfere with updating the boxes
+	    $tr.attr("class","boxtemplate");
+
+	    //setup touching and clicking
+	    $(".boxExpandUp").click(function(){
+		LOOKUP._expandBox(parseInt($(this).attr("box")),-expand_box_amt);
+	    });
+	    $(".boxExpandDown").click(function(){
+		LOOKUP._expandBox(parseInt($(this).attr("box")),expand_box_amt);
+	    });
+	},
+	_expandBox : function(box_id)
+	{
 	},
 	    
 	
@@ -99,10 +117,6 @@ var LOOKUP = LOOKUP || (function(){
 
 	    //write boxes into html
 	    LOOKUP._writeBoxesInPage();
-	    //start the update box loop
-	    _boxes.forEach(function(box) {
-		LOOKUP._addRowRange(box.srow, box.erow);
-	    });
 
 	    //refresh boxes in display
 	    LOOKUP._refreshDisplayedBoxes()
@@ -110,7 +124,7 @@ var LOOKUP = LOOKUP || (function(){
 	//refreshes contents of dirty boxes in display
 	_refreshDisplayedBoxes : function()
 	{
-	    var elems = getElementsInView($('#box'));
+	    var elems = getElementsInView($('.boxrow'));
 	    for(i = 0; i < elems.length; i++)
 	    {
 		var e = elems[i];
@@ -122,19 +136,26 @@ var LOOKUP = LOOKUP || (function(){
 		}
 	    }
 	},
+	//refreshes the given box id. If box needs to be updated, this will _loadRows which
+	//will recall _refreshDisplayedBoxes to check for more
 	_refreshIfDirty : function(boxId)
 	{
 	    var boxIndex = binarySearch(_boxes, function(b) { return b.id >= boxId} );
 	    var box = _boxes[boxIndex];
 
+	    //if we are already trying to load up the box
+	    if(box.loading) { return false;}
+
 	    if(box.rowsOffset != 0)
 	    {
+		box.loading = true;
 		LOOKUP._loadRows(box.srow, box.rowsOffset);
 		return true;
 	    }
 
 	    if(box.rows.length < box.erow - box.srow)
 	    {
+		box.loading = true;
 		LOOKUP._loadRows(box.srow + box.rows.length, box.erow - box.srow + box.rows.length);
 		return true;
 	    }
@@ -149,10 +170,8 @@ var LOOKUP = LOOKUP || (function(){
 	{
 	    var $xml = $(result)
 
-	    var date = $xml.find("Date").text();
-	    
 	    var rows = $xml.find("Row").map(function() {
-		return { id: $(this).attr("id"),
+		return { id: parseInt($(this).attr("id")),
 			 text: $(this).attr("text") };
 	    }).toArray();
 	    
@@ -160,11 +179,13 @@ var LOOKUP = LOOKUP || (function(){
 
 	    //get the box for the range of rows
 	    var box = binarySearchFind(_boxes,function(box)
-				       { return box.srow <= fr.id })
+				       { return box.srow >= fr.id })
 	    if(!box)
 	    {
 		alert ("wheres the box? "+fr.id);
 	    }
+	    
+	    box.date = $xml.find("date").text();
 	    
 	    if(box.rowsOffset != 0 && fr.id < box.srow + box.rowsOffset)
 	    {
@@ -178,42 +199,22 @@ var LOOKUP = LOOKUP || (function(){
 	    }
 
 	    LOOKUP._redrawBox(box);
+	    box.loading = false;
+
+	    //loop back and try to refresh another box
+	    LOOKUP._refreshDisplayedBoxes();
 	},
 	_redrawBox : function(box)
 	{
-	    var b = $("div[box="+box.id+"]");
+	    var b = $("tr[box="+box.id+"]");
+	    b.hide();
+	    $(b).find("#date").empty();
+	    $(b).find("#date").append(box.date);
 	    var t = $(b).find("#text");
 	    box.rows.forEach(function(r) {
-		t.append("<br>"+r.text);
+		t.append(r.text+"<br>");
 	    });
-	},
-	_addRowRange : function (start,end)
-	{
-	    //find the rowIndex of the first row we already which
-	    //is in the range we want to load
-	    var rowIndex = binarySearch(_rows,
-				     function(r)
-				     {
-					 return r.id >= start;
-				     });
-
-	    //fill in any gaps in the rows we already have loaded
-	    var gapStart = start;
-	    while(rowIndex < _rows.length)
-	    {
-		var rowId = _rows[rowIndex].id;
-		if(rowId < end)
-		{
-		    if(gapStart != rowId)
-			_addRowRange2(gapStart,rowId);
-		    gapStart = rowId + 1;
-		}
-	    }
-	},
-	_addRowRange2 : function (start,end) //add a row range, with the expectation
-	//that it has already been checked against the rows we already have
-	{
-	    //we still need to verify that we aren't overlapping ou
+	    b.fadeIn();
 	},
 
 	updateBoxesForKeyword : function(keyword)

@@ -61,7 +61,7 @@ function isBelowTopOfScreen(elem) {
 function getElementsInView(elems) {
     var elemArray = elems.toArray();
     var startIndex = binarySearch(elemArray, isBelowTopOfScreen);
-    var endIndex = binarySearch2(elemArray, isBelowTopOfScreen, startIndex, elemArray.length);
+    var endIndex = binarySearch2(elemArray, isBelowBottomOfScreen, startIndex, elemArray.length);
     return elemArray.slice(startIndex, endIndex);
 }
 

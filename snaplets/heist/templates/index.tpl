@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>AutoNomic Irc Index</title>
+    <link rel="stylesheet" href="/files/styles.css">
   </head>
   <body>
     <h2>Keywords</h2>
