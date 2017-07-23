@@ -93,9 +93,8 @@ var LOOKUP = LOOKUP || (function(){
 		LOOKUP._expandBox(parseInt($(this).attr("box")),_expand_box_amt);
 	    });
 	},
-	_expandBox : function(boxId, amt)
+	_expandBox : function(boxIndex, amt)
 	{
-	    var boxIndex = binarySearch(_boxes, function(b) { return b.id >= boxId} );
 	    var box = _boxes[boxIndex];
 
 	    //if we are expanding the top
@@ -128,7 +127,7 @@ var LOOKUP = LOOKUP || (function(){
 		}
 	    }
 
-	    LOOKUP._refreshIfDirty(boxId);
+	    LOOKUP._refreshIfDirty(boxIndex);
 	}, //TODO 2 dates are wrong, see box 2 and 3 of "cool" keyword
 	_resetBoxesForRanges : function(result) {
 	    //first get the ranges
@@ -173,9 +172,8 @@ var LOOKUP = LOOKUP || (function(){
 	},
 	//refreshes the given box id. If box needs to be updated, this will _loadRows which
 	//will recall _refreshDisplayedBoxes to check for more
-	_refreshIfDirty : function(boxId)
+	_refreshIfDirty : function(boxIndex)
 	{
-	    var boxIndex = binarySearch(_boxes, function(b) { return b.id >= boxId} );
 	    var box = _boxes[boxIndex];
 
 	    //if we are already trying to load up the box
@@ -241,11 +239,70 @@ var LOOKUP = LOOKUP || (function(){
 		box.rows.splice(box.rows.length,0,...rows)
 	    }
 
+	    box.contAbove = LOOKUP._continuesAbove(box);
+	    box.contBelow = LOOKUP._continuesBelow(box);
+
 	    LOOKUP._redrawBox(box,newRowsStart, newRowsStart + rows.length);
+
+	    if(box.contAbove)
+	    {
+		//if we continue above, we want to add text to the previous box to that effect
+		var pBox = LOOKUP._prevBox(box);
+
+		if(!pBox.contBelow)
+		{
+		    pBox.contBelow = true;
+		    LOOKUP._redrawBox(pBox,-1,-1);
+		}
+	    }
+	    if(box.contBelow)
+	    {
+		//if we continue above, we want to add text to the previous box to that effect
+		var nBox = LOOKUP._nextBox(box);
+
+		if(!nBox.contAbove)
+		{
+		    nBox.contAbove = true;
+		    LOOKUP._redrawBox(nBox,-1,-1);
+		}
+	    }
+	    
 	    box.loading = false;
 
 	    //loop back and try to refresh another box
 	    LOOKUP._refreshDisplayedBoxes();
+	},
+	_prevBox : function(box)
+	{
+	    if(box.id == 0)
+	    {
+		return false;
+	    }
+	    return _boxes[box.id-1];
+	},
+	_nextBox : function(box)
+	{
+	    if(box.id == _boxes.length-1)
+	    {
+		return false;
+	    }
+	    return _boxes[box.id+1];
+	},
+	_continuesAbove : function(box)
+	{
+	    if(box.id == 0)
+	    {
+		return false;
+	    }
+	    return _boxes[box.id-1].erow == box.srow;
+	},
+	_continuesBelow : function(box)
+	{
+	    if(box.id == _boxes.length-1)
+	    {
+		return false;
+	    }
+	    return _boxes[box.id+1].srow == box.erow;
 	},
 	_redrawBox : function(box, newRowsStart, newRowsEnd)
 	{
@@ -255,12 +312,31 @@ var LOOKUP = LOOKUP || (function(){
 	    var t = $(b).find("#text");
 	    t.empty();
 
+	    var displayDiv = newRowsStart != 0 || newRowsEnd != box.rows.length;
+
+	    var topMessage="";
+	    var bottomMessage="";
+
+	    if(box.srow == 0)
+	    {
+		topMessage = "<i>(Beginning of log)</i><br>";
+	    }
+	    //TODO 2 handle end of log
+	    if(box.contAbove)
+	    {
+		$(b).find('.boxExpandUp').hide();
+		topMessage = "<i>(Continues above)</i><br><br>";
+	    }
+	    if(box.contBelow)
+	    {
+		$(b).find('.boxExpandDown').hide();
+		bottomMessage = "<br><i>(Continues below)</i>";
+	    }
+
 	    //note that we can only use one append() call, or colors don't work right for
 	    //some reason (at least in chrome)
-	    var text = "";
+	    var text = topMessage;
 	    var i;
-
-	    var displayDiv = newRowsStart != 0 || newRowsEnd != box.rows.length;
 
 	    for(i = 0; i < box.rows.length; i++)
 	    {
@@ -283,21 +359,18 @@ var LOOKUP = LOOKUP || (function(){
 		text += "</div>";
 	    }
 	    
-	    t.append(text);
+	    t.append(text+bottomMessage);
 
 	    //fade in the new text
-	    //t.find(".divtext").effect('highlight',{},1500); 
 	    if(displayDiv) t.find(".divtext").animate({opacity: 1},500);
-	    //t.find(".divtext").toggle("highlight")
+
 	},
 
 	updateBoxesForKeyword : function(keyword)
 	{
 	    $.get( "/retrieve?kw="+keyword, LOOKUP._resetBoxesForRanges );
 	    //$.getJSON("/retrieve?kw="+_keyword, );
-            var d = $("div")
 	    //d.clear()
-	    d.append("<br>ARR MATEY!!!fdsfasd")
 	}
     }
 }());
