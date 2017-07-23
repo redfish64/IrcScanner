@@ -2,11 +2,14 @@
 var LOOKUP = LOOKUP || (function(){
     var _boxes = [];
     var _add_rows_for_box = 1; //rows above and below box
+    var _expand_box_amt = 10; //rows to add when expanding a box
     
     return {
-        init : function(init_box_size) {
-	    if(init_box_size) _add_rows_for_box = Math.trunc(init_box_size / 2);
-
+        init : function(args) {
+	    
+	    if(args.init_box_size) _add_rows_for_box = Math.trunc(init_box_size / 2);
+	    if(args.expand_box_amt) _expand_box_amt = args.expand_box_amt;
+	    
 	    $( window ).scroll(LOOKUP._refreshDisplayedBoxes)
         },
 	//joins the result into separate boxes, if the lines are sequential
@@ -59,7 +62,7 @@ var LOOKUP = LOOKUP || (function(){
 		}
 	    });
 				
-	},
+	}, //TODO 2.5 no longer need binary search for box ids, since boxes are never eaten
 	//creates html for boxes in page after range is found (but before lines are loaded)
 	_writeBoxesInPage : function() {
 	    var $t = $("#boxtemplate");
@@ -84,17 +87,49 @@ var LOOKUP = LOOKUP || (function(){
 
 	    //setup touching and clicking
 	    $(".boxExpandUp").click(function(){
-		LOOKUP._expandBox(parseInt($(this).attr("box")),-expand_box_amt);
+		LOOKUP._expandBox(parseInt($(this).attr("box")),-_expand_box_amt);
 	    });
 	    $(".boxExpandDown").click(function(){
-		LOOKUP._expandBox(parseInt($(this).attr("box")),expand_box_amt);
+		LOOKUP._expandBox(parseInt($(this).attr("box")),_expand_box_amt);
 	    });
 	},
-	_expandBox : function(box_id)
+	_expandBox : function(boxId, amt)
 	{
-	},
-	    
-	
+	    var boxIndex = binarySearch(_boxes, function(b) { return b.id >= boxId} );
+	    var box = _boxes[boxIndex];
+
+	    //if we are expanding the top
+	    if(amt < 0)
+	    {
+		var newSrow = Math.max(0,box.srow+amt);
+
+		//if we run into the previous box, we stop there
+		if(boxIndex >= 1)
+		{
+		    var lastBox = _boxes[boxIndex-1];
+		    
+		    newSrow = Math.max(lastBox.erow, newSrow);
+		}
+
+		//update rows offset for the adjusted start position
+		box.rowsOffset = box.srow - newSrow;
+		box.srow = newSrow;
+	    }
+	    else
+	    {
+		box.erow += amt;
+
+		//if we run into the next box, we stop there
+		if(boxIndex < _boxes.length-1)
+		{
+		    var nextBox = _boxes[boxIndex+1];
+		    
+		    box.erow = Math.min(nextBox.srow, box.erow);
+		}
+	    }
+
+	    LOOKUP._refreshIfDirty(boxId);
+	}, //TODO 2 dates are wrong, see box 2 and 3 of "cool" keyword
 	_resetBoxesForRanges : function(result) {
 	    //first get the ranges
 	    _ranges = [];
@@ -156,7 +191,7 @@ var LOOKUP = LOOKUP || (function(){
 	    if(box.rows.length < box.erow - box.srow)
 	    {
 		box.loading = true;
-		LOOKUP._loadRows(box.srow + box.rows.length, box.erow - box.srow + box.rows.length);
+		LOOKUP._loadRows(box.srow + box.rows.length, box.erow - box.srow - box.rows.length);
 		return true;
 	    }
 
@@ -165,9 +200,11 @@ var LOOKUP = LOOKUP || (function(){
 	_loadRows : function (srow, count)
 	{
 	    $.get( "/loadRows?srow="+srow+"&count="+count, LOOKUP._processRows );
+	    console.log("loading "+srow+" "+count);
 	},
 	_processRows : function(result)
 	{
+	    console.log("processing  "+result);
 	    var $xml = $(result)
 
 	    var rows = $xml.find("Row").map(function() {
@@ -179,42 +216,79 @@ var LOOKUP = LOOKUP || (function(){
 
 	    //get the box for the range of rows
 	    var box = binarySearchFind(_boxes,function(box)
-				       { return box.srow >= fr.id })
+				       { return box.erow > fr.id })
 	    if(!box)
 	    {
 		alert ("wheres the box? "+fr.id);
 	    }
 	    
 	    box.date = $xml.find("date").text();
+
+	    var newRowsStart;
 	    
 	    if(box.rowsOffset != 0 && fr.id < box.srow + box.rowsOffset)
 	    {
-		var newRowOffset = fr.id;
-		box.rows.splice(0,0,rows);
+		newRowsStart = 0;
+
+		box.rowsOffset = fr.id - box.srow;
+		box.rows.splice(0,0,...rows);
 	    }
 	    else if(box.rows.length < box.erow - box.srow &&
 		    fr.id == box.srow + box.rows.length)
-	    {
+	    {	
+		newRowsStart = box.rows.length;
+
 		box.rows.splice(box.rows.length,0,...rows)
 	    }
 
-	    LOOKUP._redrawBox(box);
+	    LOOKUP._redrawBox(box,newRowsStart, newRowsStart + rows.length);
 	    box.loading = false;
 
 	    //loop back and try to refresh another box
 	    LOOKUP._refreshDisplayedBoxes();
 	},
-	_redrawBox : function(box)
+	_redrawBox : function(box, newRowsStart, newRowsEnd)
 	{
 	    var b = $("tr[box="+box.id+"]");
-	    b.hide();
 	    $(b).find("#date").empty();
 	    $(b).find("#date").append(box.date);
 	    var t = $(b).find("#text");
-	    box.rows.forEach(function(r) {
-		t.append(r.text+"<br>");
-	    });
-	    b.fadeIn();
+	    t.empty();
+
+	    //note that we can only use one append() call, or colors don't work right for
+	    //some reason (at least in chrome)
+	    var text = "";
+	    var i;
+
+	    var displayDiv = newRowsStart != 0 || newRowsEnd != box.rows.length;
+
+	    for(i = 0; i < box.rows.length; i++)
+	    {
+		var r = box.rows[i];
+		
+		if(i == newRowsStart && displayDiv)
+		{
+		    //we put any new text in a div so we can highlight it when it loads in
+		    text += "<div class='divtext' style='opacity:0'>";
+		}
+		else if(i == newRowsEnd && displayDiv)
+		{
+		    text += "</div>";
+		}
+	    	text += r.text + "<br>";
+	    }
+
+	    if(i == newRowsEnd && displayDiv)
+	    {
+		text += "</div>";
+	    }
+	    
+	    t.append(text);
+
+	    //fade in the new text
+	    //t.find(".divtext").effect('highlight',{},1500); 
+	    if(displayDiv) t.find(".divtext").animate({opacity: 1},500);
+	    //t.find(".divtext").toggle("highlight")
 	},
 
 	updateBoxesForKeyword : function(keyword)

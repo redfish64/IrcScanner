@@ -7,4 +7,13 @@ tr.boxrow:nth-child(even) {
 tr.boxrow:nth-child(odd) {
     background-color: lightgray;
 }
-
+td {
+    padding: 5px
+}
+.dateheader {
+    color: green;
+    font-weight: bold;
+}
+.divtext {
+    background-color: #D0FFD0
+}
