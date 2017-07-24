@@ -20,10 +20,10 @@ import Heist.Interpreted
 lookupHandler :: Handler IrcSnaplet IrcSnaplet ()
 lookupHandler =
   handleETHandler $ do
-    name <- getParamET "name" >>= (return . decodeUtf8)
-    lift $ renderWithSplices "lookup" (allSplices name )
+    keyword <- getParamET "keyword" >>= (return . decodeUtf8)
+    lift $ renderWithSplices "lookup" (lookupPageSplices keyword )
     return ()
 
     
-allSplices :: Text -> Splices (SnapletISplice IrcSnaplet)
-allSplices n = "keywordName" ## textSplice n
+lookupPageSplices :: Text -> Splices (SnapletISplice IrcSnaplet)
+lookupPageSplices k = "keyword" ## textSplice k

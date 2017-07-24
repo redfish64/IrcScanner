@@ -10,7 +10,7 @@
       <allIndexes>
       <tr>
 	<td>
-	  <a href="${keywordURL}"><keyword/></a>
+	  <a href="lookup?keyword=${keyword}"><keyword/></a>
 	</td>
       </tr>
       </allIndexes>

@@ -18,3 +18,28 @@ td {
 .divtext {
     background-color: #D0FFD0
 }
+
+ul.lookup_header {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: fixed;
+    background-color: #FFFFFF;
+    top: 0;
+    width: 100%;
+}
+
+li.lookup_header
+{
+    float: left;
+}
+
+
+li a {
+    display: block;
+    color: black;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}

@@ -62,8 +62,7 @@ var LOOKUP = LOOKUP || (function(){
 		}
 	    });
 				
-	}, //TODO 2.5 no longer need binary search for box ids, since boxes are never eaten
-	//creates html for boxes in page after range is found (but before lines are loaded)
+	},
 	_writeBoxesInPage : function() {
 	    var $t = $("#boxtemplate");
 	    var $tr = $t.find(".boxtemplate")
@@ -86,13 +85,12 @@ var LOOKUP = LOOKUP || (function(){
 	    $tr.attr("class","boxtemplate");
 
 	    //setup touching and clicking
+	    $(".boxExpandUp").click(function(){
+		LOOKUP._expandBox(parseInt($(this).attr("box")),-_expand_box_amt);
+	    });
 	    $(".boxExpandDown").click(function(){
 		LOOKUP._expandBox(parseInt($(this).attr("box")),_expand_box_amt);
 	    });
-	},
-	_upClicked : function()
-	{
-	    LOOKUP._expandBox(parseInt($(this).attr("box")),-_expand_box_amt);
 	},
 	_expandBox : function(boxIndex, amt)
 	{
@@ -153,8 +151,14 @@ var LOOKUP = LOOKUP || (function(){
 	    //write boxes into html
 	    LOOKUP._writeBoxesInPage();
 
-	    //refresh boxes in display
-	    LOOKUP._refreshDisplayedBoxes()
+	    // //refresh boxes in display
+	    // LOOKUP._refreshDisplayedBoxes()
+
+	    //we refresh all the boxes, since otherwise, scrolling to the bottom doesn't work right, and neither does scrolling upwards after going to the bottom
+	    for(i = 0; i < _boxes.length; i++)
+	    {
+		LOOKUP._refreshIfDirty(i);
+	    }
 	},
 	//refreshes contents of dirty boxes in display
 	_refreshDisplayedBoxes : function()

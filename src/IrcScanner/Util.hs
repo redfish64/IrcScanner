@@ -66,7 +66,7 @@ justOrError s Nothing = Left s
 justOrError _ (Just x) = Right x
 
 sliceSeq :: Int -> Int -> S.Seq x -> S.Seq x
-sliceSeq from count xs = S.take count (S.drop from xs)
+sliceSeq from cnt xs = S.take cnt (S.drop from xs)
 
 readOrLeft :: (Monad x, Read y) => Text -> Text -> EitherT Text x y
 readOrLeft errMsg val = EitherT $ return (justOrError errMsg $ readMaybe (unpack val))

@@ -15,28 +15,39 @@
       })
     </script>
   </head>
-  <body style='background-color: gray'>
-      
-      <table id="boxtemplate" hidden>
-	<tr class="boxtemplate">
-	  <td>
-	    <table width="100%">
-	      <tr>
-		<td valign="top" align="left"><a class="boxExpandUp" href="javascript:void(0)" box="" onclick="LOOKUP.upClicked(); return false"><img src="/files/uparrow.png" /></a></td>
-		<td id='date' class='dateheader' width="100%">Loading...</td>
-	      </tr>
-	      <tr>
-		  <td valign="bottom" align="left"><a class="boxExpandDown" href="javascript:void(0)" box="" onclick="LOOKUP.upClicked(); return false"><img src="/files/downarrow.png" /></a></td>
-		  <td id='text' width="100%"></td>
-	      </tr>
-	    </table>
-	  </td>
-	</tr>
-      </table>
-    <h2 id="kw" kw="${keywordName}">Keyword <keywordName /></h2>
+  <body style='background-color: gray;margin: 0%'>
+    <ul class='lookup_header' style='background-color: #FFFFFF'>
+      <li class='lookup_header'><a>Keyword: <b><keyword /></b> </a> </li>
+      <li class='lookup_header'><a style='color: blue' href="javascript:void(0)" onclick="window.scrollTo(0,0)">Go to Top</a></li>
+      <li class='lookup_header'><a style='color: blue' href="javascript:void(0)" onclick="window.scrollTo(0,document.body.scrollHeight)">Go to Bottom</a></li>
+    </ul>
+
+    <div style="height:48px" />
+    
+    <!--used by javascript to get keyword (unfortunately, snap can't substitute within
+        javascript blocks, so we need to pass it-->
+    <div id="kw" kw="${keyword}" />
+    
     <table id="boxtable" width="100%">
       <tr><td>ARR MATEY! </td></tr>
     </table>
 
+    <!--template for box rows -->
+    <table id="boxtemplate" hidden>
+      <tr class="boxtemplate">
+	<td>
+	  <table width="100%">
+	    <tr>
+	      <td valign="top" align="left"><a class="boxExpandUp" href="javascript:void(0)" box=""><img src="/files/uparrow.png" /></a></td>
+		<td id='date' class='dateheader' width="100%">Loading...</td>
+	    </tr>
+	    <tr>
+	      <td valign="bottom" align="left"><a class="boxExpandDown" href="javascript:void(0)" box=""><img src="/files/downarrow.png" /></a></td>
+	      <td id='text' width="100%"></td>
+	    </tr>
+	  </table>
+	</td>
+      </tr>
+    </table>
   </body>
 </html>

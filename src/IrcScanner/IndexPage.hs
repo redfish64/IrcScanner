@@ -21,7 +21,6 @@ import Data.Text(append,pack)
 splicesFromCIR :: Monad n => CachedIndexResult -> Splices (Splice n)
 splicesFromCIR cir =
   do
-    "keywordURL" ## (textSplice $ "lookup?name=" `append` view (cindex . idisplayName) cir)
     "keyword" ## textSplice $ view (cindex . idisplayName) cir
 
 allSplices :: [CachedIndexResult] -> Integer -> Splices (SnapletISplice x)
