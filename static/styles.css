@@ -1,6 +1,7 @@
 body {
-    background-color: gray;
+    background-color: lightgray;
 }
+
 tr.boxrow:nth-child(even) {
     background-color: white;
 }

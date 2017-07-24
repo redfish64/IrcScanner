@@ -86,12 +86,13 @@ var LOOKUP = LOOKUP || (function(){
 	    $tr.attr("class","boxtemplate");
 
 	    //setup touching and clicking
-	    $(".boxExpandUp").click(function(){
-		LOOKUP._expandBox(parseInt($(this).attr("box")),-_expand_box_amt);
-	    });
 	    $(".boxExpandDown").click(function(){
 		LOOKUP._expandBox(parseInt($(this).attr("box")),_expand_box_amt);
 	    });
+	},
+	_upClicked : function()
+	{
+	    LOOKUP._expandBox(parseInt($(this).attr("box")),-_expand_box_amt);
 	},
 	_expandBox : function(boxIndex, amt)
 	{
@@ -324,12 +325,12 @@ var LOOKUP = LOOKUP || (function(){
 	    //TODO 2 handle end of log
 	    if(box.contAbove)
 	    {
-		$(b).find('.boxExpandUp').hide();
+		$(b).find('.boxExpandUp').css('visibility','hidden');
 		topMessage = "<i>(Continues above)</i><br><br>";
 	    }
 	    if(box.contBelow)
 	    {
-		$(b).find('.boxExpandDown').hide();
+		$(b).find('.boxExpandDown').css('visibility','hidden');
 		bottomMessage = "<br><i>(Continues below)</i>";
 	    }
 
