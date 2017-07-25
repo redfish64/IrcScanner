@@ -1,5 +1,6 @@
 module Parser.Irssi.Log.Util.Import (
   importIrssiData,
+  importIrssiDataContents,
   importIrssiDataPure
 ) where
 
@@ -27,14 +28,23 @@ importIrssiData path = do
   h <- openFile path ReadMode
   hSetEncoding h latin1
   contents <- T.hGetContents h
+  importIrssiDataContents contents
+  
+-- | Import an irssi log file into a list of LogTypes from a handle
+--
+importIrssiDataContents :: T.Text -> IO [(LocalTime, LogType)]
+importIrssiDataContents contents = do
   let log_data = T.lines contents
   let log_types = catMaybes $ map parseIrssiLineText log_data
   evalStateT (mapM importIrssiData' log_types)
-    (read "Fri Mar 04 09:10:30 2011" :: LocalTime)
+  --TODO 2.8 we really need to figure out how to handle times better
+  -- choosing this default time when we don't know is a bad policy
+    (irssiTimestampToLocalTime (T.pack "Fri Mar 04 09:10:30 2011") :: LocalTime)
 
 -- | clean this up. just getting it to work
 importIrssiData' :: Monad m => LogType -> StateT LocalTime m (LocalTime, LogType)
 importIrssiData' log_type = do
+  --this updates the times of all the log messages
   case log_type of
     e@(LogOpen t) -> go t e
     e@(LogClose t) -> go t e

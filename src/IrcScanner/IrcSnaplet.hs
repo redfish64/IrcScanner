@@ -23,6 +23,7 @@ ircSnapletInit c = makeSnaplet "irc" "Irc Scanner thingy" Nothing $ do
     ("files",  serveDirectory "static"),
     ("retrieve", handleETHandler $ retrieveHandler),
     ("lookup", lookupHandler),
+    ("followLog", followLogHandler),
     ("loadRows", handleETHandler $ loadRowsHandler),
     ("", indexHandler)
             ]

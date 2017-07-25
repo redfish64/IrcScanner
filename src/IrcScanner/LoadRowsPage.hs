@@ -25,6 +25,12 @@ import Data.Sequence as S
 --import Control.Lens.TH
 
 
+
+--loads rows from the file
+--takes params:
+--  srow -- where to start from. If srow is negative, then the starting place is put
+--      at the end of the file minus count
+--  count -- number of rows to load
 loadRowsHandler :: EitherT Text (Handler IrcSnaplet IrcSnaplet) ()
 loadRowsHandler =
   do
@@ -35,30 +41,23 @@ loadRowsHandler =
 
     if (cnt <= 0) then (EitherT $ return (Left "Count must be positive")) else return ()
 
-    let lns = sliceSeq  srow cnt (view (sfile . flines) st)
-        date = (_ltime (S.index lns 0))
+    allLns <- return (view (sfile . flines) st)
+
+    let
+      srow' = if srow < 0 then (Prelude.length allLns) - cnt else srow
+      lns = sliceSeq  srow' cnt (view (sfile . flines) st)
       in
-      lift $ renderWithSplices "loadRows" $
-        do
-          "Rows" ## (return (mapInd (lineToRow srow) (toList lns)))
-          "Date" ## (return [X.Element "Date" [] [X.TextNode (pack (show date))]])
+      do
+        if (Prelude.length lns) == 0  then (EitherT $ return (Left "No lines")) else return ()
+        lift $ renderWithSplices "loadRows" $
+          do
+            "Rows" ## (return (mapInd (lineToRow srow') (toList lns)))
+            "Date" ## (return [X.Element "Date" [] [X.TextNode $ pack $ show $
+                                                    _ltime $ S.index lns 0 ]])
 
   where
     lineToRow :: Int -> ILine -> Int -> X.Node
     lineToRow indexOffset l i = 
         X.Element "Row" [("id",pack $ show (i + indexOffset)),("text",pack $ show (_llogType l))] []
 
--- cirSplice :: Monad x => CachedIndexResult -> Splice x
--- cirSplice cir =
---   return $ toList $ fmap (\r -> X.Element "range" [("srow", row rstartPos r),
---                                  ("scol", col rstartPos r),
---                                  ("erow", row rendPos r),
---                                  ("ecol", col rendPos r)] [])
---          (_cranges cir)
---   where
---     row l r = pack $ show $ view (l . prow) r
---     col l r = pack $ show $ view (l . pcol) r
-    
-  -- 
-  -- [X
     

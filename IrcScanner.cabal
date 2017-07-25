@@ -24,6 +24,7 @@ Executable IrcScanner
                 dlist >= 0.8.0.2,
                 either >= 4.4.1.1,
                 heist >= 1.0.1.0,
+                hinotify >= 0.3.9,
                 hspec >= 2.2.4,
                 lens >= 4.14,
                 map-syntax >= 0.2.0.2,

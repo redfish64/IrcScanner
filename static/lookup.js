@@ -1,8 +1,12 @@
 
 var LOOKUP = LOOKUP || (function(){
+    var _ranges = [];
     var _boxes = [];
     var _add_rows_for_box = 1; //rows above and below box
     var _expand_box_amt = 10; //rows to add when expanding a box
+    var _latest_rows_to_load = 50; //when loading latest rows, the number to load
+    var _ping_for_new_rows_timer_ms = 5000;
+    var _ping_new_rows_count = 50;
     
     return {
         init : function(args) {
@@ -12,27 +16,74 @@ var LOOKUP = LOOKUP || (function(){
 	    
 	    $( window ).scroll(LOOKUP._refreshDisplayedBoxes)
         },
-	//joins the result into separate boxes, if the lines are sequential
-	join_result : function(result) {
-	    $xml.each("range")
-	    var $ranges = xml.find("range");
-	    var r2 = []
-	    var li = -1;
-	    var text = "";
-	    for(i = 0; i < result.length; i++)
-	    {
-		var e = result[i];
-		
-		if(i -1 == li) // if sequential
-		{
-		    text += e+"<br>";
-		}
-		else
-		{
-		    var e2 = { text: text};
-		    r2[r2.length] = e2;
-		}
+	//loads ranges for a particular keyword and creates boxes for them
+	updateBoxesForKeyword : function(keyword)
+	{
+	    $.get( "/retrieve?kw="+keyword, LOOKUP._resetBoxesForRanges );
+	    //$.getJSON("/retrieve?kw="+_keyword, );
+	    //d.clear()
+	},
+	//creates a single box for log follow mode
+	createBoxForLogFollow : function()
+	{
+	    _boxes = [];
+	    _boxes[0] = {
+		id: 0,
+		rowsOffset: 0,
+		loading: false,
+		atBottom: true
 	    }
+	    setInterval(LOOKUP._pingForNewRows,_ping_for_new_rows_timer_ms);
+
+	    LOOKUP._writeBoxesInPage()
+	    
+	    $.get( "/loadRows?srow=-1&count="+_latest_rows_to_load, LOOKUP._processLatestRows );
+	},
+	//looks for new rows and adds them to the latest box for log follow mode
+	_pingForNewRows : function() {
+	    $.get( "/loadRows?srow="+_boxes[_boxes.length-1].erow+"&count="+_ping_new_rows_count, LOOKUP._processLatestRows );
+	},
+	//processes rows retrieved for log follow mode
+	_processLatestRows : function (result)
+	{	
+	    var $xml = $(result)
+
+	    var rows = $xml.find("Row").map(function() {
+		return { id: parseInt($(this).attr("id")),
+			 text: $(this).attr("text") };
+	    }).toArray();
+
+	    //if there are no new rows, no point to redraw the box
+	    if(rows.length ==0)
+		return;
+
+	    var box = _boxes[_boxes.length-1];
+
+	    var newRowsStart=-1;
+	    var newRowsEnd=-1;
+	    
+	    //if box hasn't been loaded yet
+	    if(!box.erow)
+	    {
+		box.srow = rows[0].id
+		box.erow = rows[rows.length-1].id+1
+		box.rows = rows;
+	    }
+	    else
+	    {
+		newRowsStart = box.rows.length;
+		box.erow += rows.length;
+		box.rows.splice(box.rows.length,0,...rows);
+		newRowsEnd = box.rows.length;
+	    }
+	    	    
+	    var atBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight;
+	    LOOKUP._redrawBox(box, newRowsStart, newRowsEnd);
+
+	    //adjust the window position to show the new lines, but only if they
+	    //were already at the bottom of the window
+	    if(atBottom) window.scrollTo(0,document.body.scrollHeight)
+	
 	},
 	_setupBoxesForRanges : function() {
 	    _boxes = [];
@@ -203,11 +254,9 @@ var LOOKUP = LOOKUP || (function(){
 	_loadRows : function (srow, count)
 	{
 	    $.get( "/loadRows?srow="+srow+"&count="+count, LOOKUP._processRows );
-	    console.log("loading "+srow+" "+count);
 	},
 	_processRows : function(result)
 	{
-	    console.log("processing  "+result);
 	    var $xml = $(result)
 
 	    var rows = $xml.find("Row").map(function() {
@@ -337,6 +386,10 @@ var LOOKUP = LOOKUP || (function(){
 		$(b).find('.boxExpandDown').css('visibility','hidden');
 		bottomMessage = "<br><i>(Continues below)</i>";
 	    }
+	    if(box.atBottom)
+	    {
+		$(b).find('.boxExpandDown').css('visibility','hidden');
+	    }
 
 	    //note that we can only use one append() call, or colors don't work right for
 	    //some reason (at least in chrome)
@@ -369,14 +422,8 @@ var LOOKUP = LOOKUP || (function(){
 	    //fade in the new text
 	    if(displayDiv) t.find(".divtext").animate({opacity: 1},500);
 
-	},
-
-	updateBoxesForKeyword : function(keyword)
-	{
-	    $.get( "/retrieve?kw="+keyword, LOOKUP._resetBoxesForRanges );
-	    //$.getJSON("/retrieve?kw="+_keyword, );
-	    //d.clear()
 	}
+
     }
 }());
 

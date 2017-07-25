@@ -14,6 +14,7 @@ import Data.Text.Encoding
 import IrcScanner.SnapUtil
 import Data.Text
 import Heist.Interpreted
+import Text.XmlHtml(elementChildren)
 --import Heist
 
 
@@ -26,4 +27,23 @@ lookupHandler =
 
     
 lookupPageSplices :: Text -> Splices (SnapletISplice IrcSnaplet)
-lookupPageSplices k = "keyword" ## textSplice k
+lookupPageSplices k =
+  do
+    "keyword" ## textSplice k
+    "logFollowMode" ## (return [])
+    "keywordMode" ## (fmap elementChildren getParamNode)
+
+followLogHandler :: Handler IrcSnaplet IrcSnaplet ()
+followLogHandler =
+  handleETHandler $ do
+    lift $ renderWithSplices "lookup" (followLogSplices  )
+    return ()
+
+    
+followLogSplices :: Splices (SnapletISplice IrcSnaplet)
+followLogSplices =
+  do
+    "keywordMode" ## (return [])
+    "logFollowMode" ## (fmap elementChildren getParamNode)
+
+    

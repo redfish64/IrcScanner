@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module IrcScanner.Util(replaceLeft,parseRegexWithFlags,justOrError,sliceSeq,readOrLeft,mapInd) where
+module IrcScanner.Util(replaceLeft,parseRegexWithFlags,justOrError,sliceSeq,readOrLeft,mapInd,getFileSize) where
 
 import Data.Text
 import Data.Text.ICU
@@ -10,6 +10,7 @@ import Data.Either(isLeft)
 import qualified Data.Sequence as S
 import Control.Monad.Trans.Either(EitherT(..))
 import Text.Read(readMaybe)
+import System.Posix
 
 replaceLeft :: (a -> b) -> Either a c -> Either b c
 replaceLeft f e =
@@ -77,3 +78,10 @@ readOrLeft errMsg val = EitherT $ return (justOrError errMsg $ readMaybe (unpack
 -- variant of map that passes each element's index as a second argument to f
 mapInd :: (a -> Int -> b) -> [a] -> [b]
 mapInd f l = Prelude.zipWith f l [0..]
+
+
+
+getFileSize :: String -> IO FileOffset
+getFileSize path = do
+    stat <- getFileStatus path
+    return (fileSize stat)

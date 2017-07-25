@@ -61,8 +61,8 @@ addIndex' n t r =
         lift $ addIndex i
         return i
 
-addFile :: Text -> EIST IO ()
-addFile f = 
+_addFile :: Text -> EIST IO ()
+_addFile f = 
   do
     c <- lift $ ask
     d <- liftIO $ importIrssiData (unpack f)
@@ -173,7 +173,6 @@ _demoIState =
     createDemo :: EIST IO IState 
     createDemo = 
       do
-        addFile "test.log"
         addIndex' "AutoNomic" RegexMatcher "/\\bautonomic\\b/i"
         addIndex' "Cool" RegexMatcher "/cool/i"
         addIndex' "Open/Closed Phase" RegexMatcher "/\\b(open|closed?)\\s+phase\\b/i"

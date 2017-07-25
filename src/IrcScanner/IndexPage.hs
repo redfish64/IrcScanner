@@ -12,7 +12,7 @@ import Data.IORef(readIORef)
 import Heist.Interpreted
 import Heist
 import Data.Map.Syntax((##))
-import Data.Text(append,pack)
+import Data.Text(pack)
 -- import Control.Monad.Trans.Either (runEitherT,left, EitherT(..))
 -- import Control.Monad.Trans (lift)
 -- import Data.ByteString(ByteString)

@@ -8,16 +8,31 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="/files/util.js"></script>
     <script src="/files/lookup.js"></script>
-    <script type="text/javascript">
-      $(document).ready(function(){
+    <keywordMode>
+      <script type="text/javascript">
+	$(document).ready(function(){
         LOOKUP.init({}); 
         LOOKUP.updateBoxesForKeyword($("#kw").attr("kw"))
-      })
-    </script>
+	})
+      </script>
+    </keywordMode>
+    <logFollowMode>
+      <script type="text/javascript">
+	$(document).ready(function(){
+        LOOKUP.init({}); 
+        LOOKUP.createBoxForLogFollow()
+	})
+      </script>
+    </logFollowMode>
   </head>
   <body style='background-color: gray;margin: 0%'>
     <ul class='lookup_header' style='background-color: #FFFFFF'>
-      <li class='lookup_header'><a>Keyword: <b><keyword /></b> </a> </li>
+      <keywordMode>
+	<li class='lookup_header'><a>Keyword: <b><keyword /></b> </a> </li>
+      </keywordMode>
+      <logFollowMode>
+	<li class='lookup_header'><a>Following #autonomic</a> </li>
+      </logFollowMode>
       <li class='lookup_header'><a style='color: blue' href="javascript:void(0)" onclick="window.scrollTo(0,0)">Go to Top</a></li>
       <li class='lookup_header'><a style='color: blue' href="javascript:void(0)" onclick="window.scrollTo(0,document.body.scrollHeight)">Go to Bottom</a></li>
     </ul>
