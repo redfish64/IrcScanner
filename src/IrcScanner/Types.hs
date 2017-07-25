@@ -21,7 +21,7 @@ module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..
             fcurrDay,
             flines,
             ctimeZone,
-            hacktest
+            crulesFile
             ) where
 
 import Data.Text.ICU as I
@@ -43,9 +43,9 @@ import Data.Time.LocalTime
 import Parser.Irssi.Log.Types(LogType)
 
 data MatcherType = ExactMatcher | IgnoreCaseMatcher | RegexMatcher
-   deriving (Show, Eq)
+   deriving (Show, Eq, Read)
 
-type Matcher = Regex 
+type Matcher = Regex
 
 mkMatcher :: MatcherType -> Text -> (Either Text Matcher)
 mkMatcher _ "" = Left "Empty val not allowed."
@@ -145,7 +145,8 @@ emptyIState = IState { _scirs = [], _sfile = IFile { _flines = S.empty, _fcurrDa
 data IConfig = IConfig
   {
     _cstate :: IORef IState,
-    _ctimeZone :: TimeZone
+    _ctimeZone :: TimeZone,
+    _crulesFile :: FilePath
   }
 
 makeLenses ''IConfig  
@@ -155,8 +156,7 @@ type EIST a = EitherT Text (IST a)
 
 data IrcSnaplet = IrcSnaplet {
   _iheist :: Snaplet (Heist IrcSnaplet),
-  _iconfig :: IConfig,
-  _hacktest :: Integer
+  _iconfig :: IConfig
   }
 
 makeLenses ''IrcSnaplet

@@ -14,21 +14,18 @@
       <tr>
 	<td>
 	  <a href="followLog">View Log</a>
+	</td>
+      </tr>
+      <tr>
+	<td>
 	  <a href="keyword_index">View Keyword Index</a>
 	</td>
       </tr>
       <tr>
 	<td>
-	  <h3>Keywords Index</h3>
+	  <a href="edit_keywords">Edit Keywords</a>
 	</td>
       </tr>
-      <allIndexes>
-      <tr>
-	<td>
-	  <a href="lookup?keyword=${keyword}"><keyword/></a>
-	</td>
-      </tr>
-      </allIndexes>
       </table>
   </body>
 </html>

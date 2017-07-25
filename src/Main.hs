@@ -14,13 +14,13 @@ import IrcScanner.LogWatcher
 main :: IO ()
 main =
   do
-    es <- _demoIState 
+    es <- _loadIState "keywordRules.txt"
     case es of
       Left x -> putStrLn("Error: " ++ (unpack x))
       Right s ->
         do
           i <- newIORef s
-          ic <- return $ IConfig i (hoursToTimeZone 0)
+          ic <- return $ IConfig i (hoursToTimeZone 0) "keywordRules.txt"
           watchLogFile "test.log" ic
           (_, site, _) <- runSnaplet Nothing $ ircSnapletInit ic
           quickHttpServe site

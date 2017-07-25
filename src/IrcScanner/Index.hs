@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState, _demoIState,lookupCir) where
+module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir) where
 
 import IrcScanner.Types
 import Data.Sequence as S
@@ -164,22 +164,22 @@ runMatcher mr l =
 
 
 --creates a fake demo IState for testing
-_demoIState :: IO (Either Text IState)
-_demoIState =
-  do
-    i <- newIORef $ emptyIState
-    runReaderT (runEitherT createDemo) (IConfig i (hoursToTimeZone 0))
-  where
-    createDemo :: EIST IO IState 
-    createDemo = 
-      do
-        addIndex' "AutoNomic" RegexMatcher "/\\bautonomic\\b/i"
-        addIndex' "Cool" RegexMatcher "/cool/i"
-        addIndex' "Open/Closed Phase" RegexMatcher "/\\b(open|closed?)\\s+phase\\b/i"
+-- _demoIState :: IO (Either Text IState)
+-- _demoIState =
+--   do
+--     i <- newIORef $ emptyIState
+--     runReaderT (runEitherT createDemo) (IConfig i (hoursToTimeZone 0))
+--   where
+--     createDemo :: EIST IO IState 
+--     createDemo = 
+--       do
+--         addIndex' "AutoNomic" RegexMatcher "/\\bautonomic\\b/i"
+--         addIndex' "Cool" RegexMatcher "/cool/i"
+--         addIndex' "Open/Closed Phase" RegexMatcher "/"
         
-        c <- lift ask
-        s <- liftIO $ readIORef (_cstate c)
-        return s
+--         c <- lift ask
+--         s <- liftIO $ readIORef (_cstate c)
+--         return s
 
 
 _test :: IO ()

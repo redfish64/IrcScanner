@@ -5,10 +5,11 @@ module IrcScanner.IrcSnaplet where
 import IrcScanner.Types
 import           Snap
 import           Snap.Snaplet.Heist
-import IrcScanner.IndexPage
+import IrcScanner.KeywordIndexPage
 import IrcScanner.LookupPage
 import IrcScanner.RetrievePage
 import IrcScanner.LoadRowsPage
+import IrcScanner.EditKeywordsPage
 import Data.Text(pack)
 --import           Control.Lens
 import Snap.Util.FileServe
@@ -25,8 +26,10 @@ ircSnapletInit c = makeSnaplet "irc" "Irc Scanner thingy" Nothing $ do
     ("lookup", lookupHandler),
     ("followLog", followLogHandler),
     ("loadRows", handleETHandler $ loadRowsHandler),
-    ("", indexHandler)
-            ]
+    ("keyword_index", keywordIndexHandler),
+    ("edit_keywords", editKeywordsHandler),
+    ("", render "index")
+    ]
   return $ IrcSnaplet h c 0
 
   
