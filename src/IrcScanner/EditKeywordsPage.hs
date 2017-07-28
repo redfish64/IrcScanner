@@ -19,7 +19,7 @@ import Data.Text as T(Text,lines,pack,append)
 import Data.Text.Encoding(decodeUtf8,encodeUtf8)
 import IrcScanner.SnapUtil
 import IrcScanner.KeywordRulesParser
-import IrcScanner.Index(tryIndex,addIndex,deleteAllIndexes)
+import IrcScanner.Index(tryIndex,addIndex,deleteAllIndexes,updateIState)
 
 allSplices :: Text -> Splices (SnapletISplice x)
 allSplices rfc =
@@ -59,6 +59,7 @@ editKeywordsSaveHandler = handleETHandler $ do
           c <- ask
           lift $ saveKwFile rulesFileContents c
       runIST' $ deleteAllIndexes >> mapM addIndex indexes
+      runIST' $ updateIState (\s -> (s { _skwFileContents = rulesFileContents },()))
       render "edit_keywords_save_results"
 
 kwErrorsSplices :: [Text] -> Splices (SnapletISplice IrcSnaplet)

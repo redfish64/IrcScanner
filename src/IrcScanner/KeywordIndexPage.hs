@@ -18,6 +18,7 @@ import Data.Map.Syntax((##))
 -- import Control.Monad.Trans (lift)
 -- import Data.ByteString(ByteString)
 -- import Data.Text.Encoding
+import Data.List(sortBy)
 
 splicesFromCIR :: Monad n => CachedIndexResult -> Splices (Splice n)
 splicesFromCIR cir =
@@ -27,7 +28,10 @@ splicesFromCIR cir =
 allSplices :: [CachedIndexResult] -> Splices (SnapletISplice x)
 allSplices cirs =
   do
-    "allIndexes" ## (mapSplices (runChildrenWith . splicesFromCIR) cirs)
+    "allIndexes" ## (mapSplices (runChildrenWith . splicesFromCIR)
+                     (sortBy (\a b -> compare (_idisplayName (_cindex a))
+                                      (_idisplayName (_cindex b)))
+                       cirs))
 
 
 keywordIndexHandler :: HasHeist x => Handler x IrcSnaplet ()

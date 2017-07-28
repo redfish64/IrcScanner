@@ -13,7 +13,7 @@
       </tr>
       <tr>
 	<td>
-	  <a href="followLog">View Log</a>
+	  <a href="followLog">View Latest IRC Log Entries</a>
 	</td>
       </tr>
       <tr>

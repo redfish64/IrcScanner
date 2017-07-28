@@ -1,5 +1,5 @@
 AutoNomic:RegexMatcher:/\bautonomic\b|\ba\.?n\.?o\.?n\b/
 Cool:RegexMatcher:/\bcool\b/i
-Open/Closed Phase:RegexMatcher:/\b(open|closed?)\s+phase\b/i
-<b>HELLLO</b>:RegexMatcher:/HEELLLO/
 Foo:RegexMatcher:/\bfoo\b/i
+Foo2:RegexMatcher:/\bfoo2\b/i
+Open/Closed Phase:RegexMatcher:/\b(open|closed?)\s+phase\b/i
