@@ -28,9 +28,11 @@ ircSnapletInit c = makeSnaplet "irc" "Irc Scanner thingy" Nothing $ do
     ("loadRows", handleETHandler $ loadRowsHandler),
     ("keyword_index", keywordIndexHandler),
     ("edit_keywords", editKeywordsHandler),
+    ("edit_keywords_test", editKeywordsTestHandler),
+    ("edit_keywords_save", editKeywordsSaveHandler),
     ("", render "index")
     ]
-  return $ IrcSnaplet h c 0
+  return $ IrcSnaplet h c
 
   
 

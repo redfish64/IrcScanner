@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir) where
+module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir,addIndex',createInitialIState,deleteAllIndexes) where
 
 import IrcScanner.Types
 import Data.Sequence as S
@@ -19,8 +19,10 @@ import Control.Monad.Trans.Either
 --import qualified Data.Text.IO as DTI
 import Parser.Irssi.Log.Types(LogType(..),MessageContent)
 import Parser.Irssi.Log.Util.Import(importIrssiData)
-import Data.Time.LocalTime(hoursToTimeZone,localTimeToUTC)
+import Data.Time.LocalTime(localTimeToUTC)
 import qualified Data.List as LI(find)
+import Data.Text.IO as I(readFile)
+import IrcScanner.KeywordRulesParser
 
 --tries running an index against the log and returns a result (without saving it)
 tryIndex :: Index -> IST IO [Range]
@@ -99,6 +101,9 @@ getIndexes =
     s <- getIState
     return $ fmap _cindex (_scirs s)
 
+deleteAllIndexes :: IST IO ()
+deleteAllIndexes = updateIState (\s -> (s { _scirs = [] },()))
+       
 
 --deletes index from memory and cached results
 --returns true if index is found, false otherwise
@@ -181,6 +186,27 @@ runMatcher mr l =
 --         s <- liftIO $ readIORef (_cstate c)
 --         return s
 
+createInitialIState :: IConfig -> IO (Either Text IState)
+createInitialIState ic = --undefined
+  do
+    kwFileContents <- I.readFile (_crulesFile ic)
+    runReaderT (runEitherT $ doit kwFileContents) ic
+  where
+    doit :: Text -> EIST IO IState
+    doit kwFileContents = 
+      do
+        --load indexes from keyword file
+        indexes <- EitherT $ return $ replaceLeft transformKwError $ parseKwFile $ T.lines kwFileContents
+        --insert them into the state
+        lift $ mapM addIndex indexes
+
+        lift $ updateIState (\s -> (s { _skwFileContents = kwFileContents },()))
+        
+        --get and return the state
+        lift $ getIState
+    transformKwError :: [Text] -> Text
+    transformKwError t = T.unlines $ fmap
+      (\l -> "Error parsing " `append` (pack $ _crulesFile ic) `append` ": " `append` l)  t
 
 _test :: IO ()
 _test =

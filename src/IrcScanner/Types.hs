@@ -21,12 +21,14 @@ module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..
             fcurrDay,
             flines,
             ctimeZone,
-            crulesFile
+            crulesFile,
+            skwFileContents,
+            ckwFileLock
             ) where
 
 import Data.Text.ICU as I
 import Control.Monad.Trans.Reader
-
+import Control.Concurrent.MVar
 import Data.Sequence as S
 import Data.Text
 import Test.Hspec
@@ -134,19 +136,21 @@ makeLenses ''IFile
 
 data IState = IState {
   _scirs :: [CachedIndexResult],
-  _sfile :: IFile --eventually maybe we'll support multiple files
+  _sfile :: IFile, --eventually maybe we'll support multiple files
+  _skwFileContents :: Text
   } deriving (Show)
 
 makeLenses ''IState
 
 emptyIState :: IState
-emptyIState = IState { _scirs = [], _sfile = IFile { _flines = S.empty, _fcurrDay = fromGregorian 1970 1 1 } }
+emptyIState = IState { _scirs = [], _sfile = IFile { _flines = S.empty, _fcurrDay = fromGregorian 1970 1 1 }, _skwFileContents = "" }
 
 data IConfig = IConfig
   {
     _cstate :: IORef IState,
     _ctimeZone :: TimeZone,
-    _crulesFile :: FilePath
+    _crulesFile :: FilePath,
+    _ckwFileLock :: MVar ()
   }
 
 makeLenses ''IConfig  

@@ -36,10 +36,14 @@ li.lookup_header
 }
 
 
-li a {
+li.lookup_header a {
     display: block;
     color: black;
     text-align: center;
     padding: 14px 16px;
     text-decoration: none;
+}
+
+td.kwheader {
+    font-weight: bold;
 }

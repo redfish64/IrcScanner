@@ -6,14 +6,14 @@ import System.INotify
 import Control.Monad.Trans.Reader as R
 import Control.Monad.IO.Class(liftIO)
 import           System.IO as I
-import Data.Time.LocalTime(localTimeToUTC, hoursToTimeZone)
+import Data.Time.LocalTime(localTimeToUTC)--, hoursToTimeZone)
 import Parser.Irssi.Log.Util.Import(importIrssiDataContents)
 import IrcScanner.Index(addFileLines)
-import Data.Text as T (length,unpack) 
+import Data.Text as T (length)--,unpack) 
 import Data.Text.IO as T (hGetContents)
 
-import IrcScanner.Index
-import Control.Concurrent (threadDelay)
+--import IrcScanner.Index
+--import Control.Concurrent (threadDelay)
 
 
 data WatchData =
@@ -58,24 +58,24 @@ handleEvent wdir ic _ =
     putStrLn("handleEvent end");
 
 
-_watchLogTest :: IO ()          
-_watchLogTest =
-  do
-    es <- _demoIState 
-    case es of
-      Left x -> putStrLn("Error: " ++ (unpack x))
-      Right s ->
-        do
-          i <- newIORef s
-          ic <- return $ IConfig i (hoursToTimeZone 0)
-          watchLogFile "t2.log" ic
-          loopAndPrintStatus ic
-  where
-    loopAndPrintStatus :: IConfig -> IO ()
-    loopAndPrintStatus ic = do
-      s <- readIORef (_cstate ic)
-      putStrLn $ show (_sfile s)
-      threadDelay (10 * 1000 * 1000)
-      loopAndPrintStatus ic
+-- _watchLogTest :: IO ()          
+-- _watchLogTest =
+--   do
+--     es <- _demoIState 
+--     case es of
+--       Left x -> putStrLn("Error: " ++ (unpack x))
+--       Right s ->
+--         do
+--           i <- newIORef s
+--           ic <- return $ IConfig i (hoursToTimeZone 0)
+--           watchLogFile "t2.log" ic
+--           loopAndPrintStatus ic
+--   where
+--     loopAndPrintStatus :: IConfig -> IO ()
+--     loopAndPrintStatus ic = do
+--       s <- readIORef (_cstate ic)
+--       putStrLn $ show (_sfile s)
+--       threadDelay (10 * 1000 * 1000)
+--       loopAndPrintStatus ic
       
       

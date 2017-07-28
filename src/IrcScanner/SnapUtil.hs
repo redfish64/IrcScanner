@@ -5,14 +5,16 @@ import Data.Text(append,Text)
 import Data.ByteString(ByteString)
 import Control.Monad.Trans.Either (EitherT(..))
 import           Snap
---import           Snap.Snaplet.Heist
+import           Snap.Snaplet.Heist
 import IrcScanner.Types
 import Control.Monad.Trans (lift)
-import Data.Text.Encoding
-import Control.Monad.Reader(ask)
+import Control.Monad.Reader(ask,runReaderT)
 import Control.Monad.IO.Class(liftIO)
 import Data.IORef(readIORef)
 import           Control.Lens(view)
+import Data.Text.Encoding(decodeUtf8, encodeUtf8)
+import Heist(HeistT)
+
 
 
 getParamET :: Text -> EitherT Text (Handler IrcSnaplet IrcSnaplet) ByteString
@@ -23,6 +25,13 @@ getParamET p = --undefined
     doit x =
       EitherT $ return (maybe (Left $ "'" `append` p `append` "' not specified")
                         Right x)
+
+getTextParamOrDefault :: HasHeist x => Text -> Text -> Handler x IrcSnaplet Text
+getTextParamOrDefault p d = --undefined
+  do
+    maybeText <- (getParam $ encodeUtf8 p)
+    return $ maybe d id (fmap decodeUtf8 maybeText)
+
 
 handleETHandler :: EitherT Text (Handler IrcSnaplet IrcSnaplet) () -> Handler IrcSnaplet IrcSnaplet ()
 handleETHandler et = do
@@ -39,3 +48,21 @@ getState = do
   liftIO $ readIORef (view (iconfig . cstate) s)
 
 
+--runIST :: SnapletISplice IrcSnaplet
+runIST :: IST IO x -> HeistT
+          (Handler IrcSnaplet IrcSnaplet)
+          (Handler IrcSnaplet IrcSnaplet)
+          x
+runIST ist = 
+  do
+    s <- ask 
+    lift $ liftIO $ runReaderT ist (_iconfig s)
+    
+runIST' :: IST IO x -> 
+          (Handler IrcSnaplet IrcSnaplet)
+          x
+runIST' ist = 
+  do
+    s <- ask 
+    liftIO $ runReaderT ist (_iconfig s)
+    

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module IrcScanner.KeywordRulesParser where
+module IrcScanner.KeywordRulesParser(parseKwFile,saveKwFile) where
 
 
 import Text.ParserCombinators.ReadP
@@ -9,6 +9,9 @@ import qualified Data.Text as T
 import Test.Hspec
 import Control.Monad.Trans.Either
 import Control.Monad.State as S
+import Control.Concurrent.MVar
+import System.Directory(renameFile)
+import Data.Text.IO as T(writeFile)
 --import Control.Monad(sequence)
 -- ex file
 -- AutoNomic:RegexMatcher:/\bautonomic\b|\ba\.?n\.?o\.?n\b/
@@ -81,18 +84,38 @@ kwLine =
     return $ Index dn m
 
 
-kwFile :: [T.Text] -> Either [T.Text] [Index]
-kwFile lns = listEitherToEitherLists $ fmap (evalState $ runEitherT kwLine) lns
-    
+-- kwFile :: [T.Text] -> [Either T.Text Index]
+-- kwFile lns = fmap (evalState $ runEitherT kwLine) lns 
 
---if there are any lefts, returns a list of the lefts
+parseKwFile :: [T.Text] -> Either [T.Text] [Index]
+parseKwFile lns = listEitherToEitherLists (fmap (evalState $ runEitherT kwLine) lns ) "" 
+
+
+saveKwFile :: T.Text -> IConfig -> IO ()
+saveKwFile contents ic =
+  let
+    fileName = (_crulesFile ic)
+    bakFileName = fileName ++ ".bak"
+    lock = (_ckwFileLock ic)
+  in
+    withMVar lock $ const $ do
+      renameFile fileName bakFileName
+      T.writeFile fileName contents
+
+
+
+
+--if there are any lefts, returns a list of the lefts. For rows that are right in that
+-- case, returns placeholder
 --otherwise returns a list of the rights
-listEitherToEitherLists :: [Either a b] -> Either [a] [b]
-listEitherToEitherLists lns = doit lns (Right [])
+listEitherToEitherLists :: [Either a b] -> a -> Either [a] [b]
+listEitherToEitherLists lns placeholder = case doit lns (Right []) of
+  Left x -> Left (reverse x)
+  Right y -> Right (reverse y)
   where
     doit (Right x : xs) (Right ys) = doit xs (Right (x : ys))
-    doit (Left x : xs) (Right _) = doit xs (Left [x])
-    doit (Right _ : xs) (Left ys) = doit xs (Left ys)
+    doit (Left y : ys) (Right xs) = doit ys (Left $ y : (fmap (const placeholder) xs))
+    doit (Right _ : xs) (Left ys) = doit xs (Left $ placeholder : ys)
     doit (Left y : xs) (Left ys) = doit xs $ Left (y : ys)
     doit [] r = r
     
@@ -112,7 +135,7 @@ _test =
         )
   describe "kwFile" $ do
     it "the happy path" $ do
-      (show $ kwFile ["AutoNomic:RegexMatcher:/\\bautonomic\\b|\\ba\\.?n\\.?o\\.?n\\b/","Cool:RegexMatcher:/\\bcool\\b/i"])
+      (show $ parseKwFile ["AutoNomic:RegexMatcher:/\\bautonomic\\b|\\ba\\.?n\\.?o\\.?n\\b/","Cool:RegexMatcher:/\\bcool\\b/i"])
         `shouldBe`
         "Right [Index {_idisplayName = \"Cool\", _imatcher = Regex \"\\\\bcool\\\\b\"},Index {_idisplayName = \"AutoNomic\", _imatcher = Regex \"\\\\bautonomic\\\\b|\\\\ba\\\\.?n\\\\.?o\\\\.?n\\\\b\"}]"
    
