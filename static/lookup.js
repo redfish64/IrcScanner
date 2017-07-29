@@ -52,7 +52,7 @@ var LOOKUP = LOOKUP || (function(){
 
 	    var rows = $xml.find("Row").map(function() {
 		return { id: parseInt($(this).attr("id")),
-			 text: $(this).attr("text") };
+			 text: $(this).html() };
 	    }).toArray();
 
 	    //if there are no new rows, no point to redraw the box
