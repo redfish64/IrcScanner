@@ -7,6 +7,7 @@ var LOOKUP = LOOKUP || (function(){
     var _latest_rows_to_load = 50; //when loading latest rows, the number to load
     var _ping_for_new_rows_timer_ms = 5000;
     var _ping_new_rows_count = 50;
+    var _keyword;
     
     return {
         init : function(args) {
@@ -20,6 +21,7 @@ var LOOKUP = LOOKUP || (function(){
 	updateBoxesForKeyword : function(keyword)
 	{
 	    $.get( "/retrieve?kw="+keyword, LOOKUP._resetBoxesForRanges );
+	    _keyword = keyword
 	    //$.getJSON("/retrieve?kw="+_keyword, );
 	    //d.clear()
 	},
@@ -253,7 +255,8 @@ var LOOKUP = LOOKUP || (function(){
 	},
 	_loadRows : function (srow, count)
 	{
-	    $.get( "/loadRows?srow="+srow+"&count="+count, LOOKUP._processRows );
+	    $.get( "/loadRows?srow="+srow+"&count="+count+
+		   (_keyword ? "&keyword="+_keyword : ""), LOOKUP._processRows );
 	},
 	_processRows : function(result)
 	{
@@ -261,7 +264,7 @@ var LOOKUP = LOOKUP || (function(){
 
 	    var rows = $xml.find("Row").map(function() {
 		return { id: parseInt($(this).attr("id")),
-			 text: $(this).attr("text") };
+			 text: $(this).html() };
 	    }).toArray();
 	    
 	    var fr = rows[0];

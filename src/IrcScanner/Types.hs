@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCacheIndexResult, MatcherType(..),mkMatcher,IState(..),IConfig(..),IST,EIST,emptyIState,ILine(..),
+module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..),emptyCacheIndexResult, MatcherType(..),mkMatcher,IState(..),IConfig(..),IST,EIST,emptyIState,ILine(..),IFile(..),
             idisplayName,
             imatcher,
             prow,

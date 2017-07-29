@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir,addIndex',createInitialIState,deleteAllIndexes) where
+module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir,addIndex',createInitialIState,deleteAllIndexes,getIrssiMessageText) where
 
 import IrcScanner.Types
 import Data.Sequence as S

@@ -32,6 +32,12 @@ getTextParamOrDefault p d = --undefined
     maybeText <- (getParam $ encodeUtf8 p)
     return $ maybe d id (fmap decodeUtf8 maybeText)
 
+getTextParam :: HasHeist x => Text -> Handler x IrcSnaplet (Maybe Text)
+getTextParam p = --undefined
+  do
+    v <- (getParam $ encodeUtf8 p)
+    return $ fmap decodeUtf8 v
+
 
 handleETHandler :: EitherT Text (Handler IrcSnaplet IrcSnaplet) () -> Handler IrcSnaplet IrcSnaplet ()
 handleETHandler et = do
