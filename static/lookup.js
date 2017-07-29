@@ -420,13 +420,26 @@ var LOOKUP = LOOKUP || (function(){
 		text += "</div>";
 	    }
 	    
-	    t.append(text+bottomMessage);
+	    var $boxDom = LOOKUP._replaceNickColors($("<div>"+text+"</div>"))
+
+	    t.append($boxDom.html()+bottomMessage);
+
 
 	    //fade in the new text
 	    if(displayDiv) t.find(".divtext").animate({opacity: 1},500);
 
+	},
+	_replaceNickColors : function($box) {
+	    var nicks = $box.find('.nick')
+	    nicks.each(function (x,val) {
+		var h = val.textContent.hashCode();
+		var b = (h & 0x7F) + 128
+		var g = ((h >>> 8) & 0x7F) + 128
+		var r = ((h >>> 16) & 0x7F) + 128
+		$(this).attr("style","background-color: rgba("+r+","+g+","+b+",1.0);font-weight: bold");
+	    })
+	    return $box;
 	}
-
     }
 }());
 
