@@ -143,7 +143,7 @@ message text = do
 
 action :: Text -> Maybe LogType
 action text = do
-  (off,nick':message':[]) <- matcher text "^(\\d\\d:\\d\\d(?::\\d\\d)?)\\s?\\* (\\S+) (.*)$"
+  (off,nick':message':[]) <- matcher text "^(\\d\\d:\\d\\d(?::\\d\\d)?)\\s+\\* (\\S+) (.*)$"
   return $ Action off nick' message'
 
 

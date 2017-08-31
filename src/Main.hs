@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import           Snap
+import Snap
 import IrcScanner.IrcSnaplet
 import IrcScanner.Types
 import Data.IORef(newIORef)
