@@ -8,8 +8,8 @@ import Control.Monad.IO.Class(liftIO)
 import           System.IO as I
 import Data.Time.LocalTime(localTimeToUTC)--, hoursToTimeZone)
 import Parser.Irssi.Log.Util.Import(importIrssiDataContents)
-import IrcScanner.Index(addFileLines)
-import Data.Text as T (length)--,unpack) 
+import IrcScanner.Index(addFileLines,addLogFileToState)
+import Data.Text as T (length,Text(..))--,unpack) 
 import Data.Text.IO as T (hGetContents)
 
 --import IrcScanner.Index
@@ -18,15 +18,22 @@ import Data.Text.IO as T (hGetContents)
 
 data WatchData =
   WatchData {
+  fileNickName :: T.Text,
   fileName :: FilePath,
   currPos :: Integer
   } deriving (Show)
 
---watches the log file for updates, and adds rows to state when new lines appear
-watchLogFile :: FilePath -> IConfig ->  IO ()
-watchLogFile fn ic = do
+-- | watches the log file for updates, and adds rows to state when new lines appear
+watchLogFile :: T.Text -- ^ file "nick name". We lovingly refer to files by these, internally
+  -> FilePath -- ^ full path to filename
+  -> IConfig 
+  ->  IO ()
+watchLogFile fnn fn ic = do
+  -- add the file to the internal state
+  runReaderT
+    (addLogFileToState fnn) ic
   inotify <- initINotify
-  wd <- liftIO $ newIORef (WatchData fn 0)
+  wd <- liftIO $ newIORef (WatchData fnn fn 0)
   liftIO $ addWatch inotify [Modify, CloseWrite] fn (handleEvent wd ic)
   handleEvent wd ic Ignored
   return ()
@@ -52,7 +59,7 @@ handleEvent wdir ic _ =
 
     --notify the main code that there are new lines
     runReaderT
-      (addFileLines $ fmap (\(t,l) -> ILine (localTimeToUTC (_ctimeZone ic) t) l) irssiData)
+      (addFileLines (fileNickName wd) $ fmap (\(t,l) -> ILine (localTimeToUTC (_ctimeZone ic) t) l) irssiData)
       ic
 
     putStrLn("handleEvent end");

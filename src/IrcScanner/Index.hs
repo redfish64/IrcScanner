@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir,addIndex',createInitialIState,deleteAllIndexes,getIrssiMessageText) where
+module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir,addIndex',createInitialIState,deleteAllIndexes,getIrssiMessageText,addLogFileToState) where
 
+import Control.Lens.At (at)
+import Control.Lens.Setter ((.~))
 import IrcScanner.Types
 import Data.Sequence as S
 import Control.Monad.Trans.Reader as R
@@ -23,6 +25,7 @@ import Data.Time.LocalTime(localTimeToUTC)
 import qualified Data.List as LI(find)
 import Data.Text.IO as I(readFile)
 import IrcScanner.KeywordRulesParser
+import Prelude as P
 
 --tries running an index against the log and returns a result (without saving it)
 tryIndex :: Index -> IST IO [Range]
@@ -36,12 +39,21 @@ tryIndex i =
 addIndex :: Index -> IST IO ()
 addIndex x = addIndexes [x]
 
+
+-- | concats all file lines together in one seq
+getAllFileLines :: IState -> Seq ILine
+getAllFileLines is =
+  let
+    files = (L.view sfiles is)
+    in P.foldr (S.><) (fromList [])
+       (S.fmap (L.view flines) files)
+
 --builds a complete cached index result from scratch
 buildCachedIndexResult :: IState -> Index -> CachedIndexResult
 buildCachedIndexResult s i =
   let
-    f = (L.view sfile s)
-  in updateCachedIndexResult (L.view flines f) (emptyCacheIndexResult i)
+    joinedLines = getAllFileLines s
+  in updateCachedIndexResult joinedLines (emptyCacheIndexResult i)
 
 
 -- returns only text from essages and actions
@@ -63,12 +75,14 @@ addIndex' n t r =
         lift $ addIndex i
         return i
 
-_addFile :: Text -> EIST IO ()
-_addFile f = 
+_addFile :: Text -- ^ file "nick name" (what file is refered to internally
+  -> Text -- ^ filename
+  -> EIST IO ()
+_addFile k f = 
   do
     c <- lift $ ask
     d <- liftIO $ importIrssiData (unpack f)
-    lift $ addFileLines $ fmap (\(t,l) -> ILine (localTimeToUTC (_ctimeZone c) t) l) d
+    lift $ addFileLines k $ fmap (\(t,l) -> ILine (localTimeToUTC (_ctimeZone c) t) l) d
 
 
 --convertMonadEither :: Monad m => m (Either a x) -> m (Either 
@@ -113,25 +127,36 @@ deleteIndex name =
   updateIState
   (\s ->
      let
-       s' = s { _scirs = Prelude.filter (\cir -> (_idisplayName . _cindex) cir == name) (_scirs s) }
+       s' = s { _scirs = P.filter (\cir -> (_idisplayName . _cindex) cir == name) (_scirs s) }
        in
-       (s',Prelude.length (_scirs s) == Prelude.length (_scirs s'))
+       (s',P.length (_scirs s) == P.length (_scirs s'))
   )
   
 
-addFileLine :: ILine -> IST IO ()
-addFileLine l = addFileLines [l]
 
-addFileLines :: [ILine] -> IST IO ()
-addFileLines ls =
+addLogFileToState :: Text -> IST IO ()
+addLogFileToState fnn =
   updateIState
-     (\s -> (refreshIndexCache (L.over (sfile . flines) (\cls -> cls >< (fromList ls)) s), ()))
+    (\s -> ( ((sfiles . (at fnn)) .~ (Just emptyFile) $ s), () ))
+
+addFileLine :: Text -> ILine -> IST IO ()
+addFileLine n l = addFileLines n [l]
+
+-- | adds file lines to cache of a particular irc file (should be called by the log watcher)
+addFileLines :: Text -- ^ the nick name of the file, ex "#autonomic" for "../irclogs/#autonomic.log"
+  -> [ILine] -- ^ lines to add
+  -> IST IO ()
+addFileLines k ls =
+  -- add the given lines to the specific file in the IState structure, looked up by "k" with sfiles
+  updateIState
+    (\s -> (refreshIndexCache (L.over (sfiles . (at k) . L._Just . flines) (\cls -> cls >< (fromList ls)) s), ()))
+
 
 refreshIndexCache :: IState -> IState
 refreshIndexCache is =
-         let ls = (L.view (sfile . flines) is)
+         let lns = getAllFileLines is
          in
-           L.over scirs (fmap (updateCachedIndexResult ls)) is
+           L.over scirs (fmap (updateCachedIndexResult lns)) is
 
 updateCachedIndexResult :: Seq ILine -> CachedIndexResult -> CachedIndexResult
 updateCachedIndexResult f cir
@@ -198,7 +223,7 @@ createInitialIState ic = --undefined
         --load indexes from keyword file
         indexes <- EitherT $ return $ replaceLeft transformKwError $ parseKwFile $ T.lines kwFileContents
         --insert them into the state
-        lift $ mapM addIndex indexes
+        _ <- lift $ mapM addIndex indexes
 
         lift $ updateIState (\s -> (s { _skwFileContents = kwFileContents },()))
         

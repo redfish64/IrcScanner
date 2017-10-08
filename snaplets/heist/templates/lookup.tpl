@@ -11,7 +11,7 @@
     <keywordMode>
       <script type="text/javascript">
 	$(document).ready(function(){
-        LOOKUP.init({}); 
+        LOOKUP.init({fileNickName=$("#fnn").attr("fnn")}); 
         LOOKUP.updateBoxesForKeyword($("#kw").attr("kw"))
 	})
       </script>
@@ -19,7 +19,7 @@
     <logFollowMode>
       <script type="text/javascript">
 	$(document).ready(function(){
-        LOOKUP.init({}); 
+        LOOKUP.init({fileNickName=$("#fnn").attr("fnn")}); 
         LOOKUP.createBoxForLogFollow()
 	})
       </script>
@@ -42,6 +42,7 @@
     <!--used by javascript to get keyword (unfortunately, snap can't substitute within
         javascript blocks, so we need to pass it-->
     <div id="kw" kw="${keyword}" />
+    <div id="fnn" fnn="${fileNickName}" />
     
     <table id="boxtable" width="100%">
       <tr><td>ARR MATEY! </td></tr>

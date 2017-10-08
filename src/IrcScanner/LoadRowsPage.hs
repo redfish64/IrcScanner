@@ -9,7 +9,7 @@ import           Control.Lens
 --import Heist.Interpreted
 --import Heist
 import Data.Map.Syntax((##))
-import Control.Monad.Trans.Either (EitherT(..))
+import Control.Monad.Trans.Either (EitherT(..),hoistEither)
 import Control.Monad.Trans (lift)
 -- import Data.ByteString(ByteString)
 import Data.Text.Encoding
@@ -28,16 +28,20 @@ import qualified Numeric.Search as SE
 import Test.Hspec
 import IrcScanner.Index(getIrssiMessageText)
 
---loads rows from the file
---takes params:
---  srow -- where to start from. If srow is negative, then the starting place is put
---      at the end of the file minus count
---  count -- number of rows to load
---  keyword -- optional parameter. If present instances of this keyword will be highlighted in log
+
+{- | loads rows from the file
+     takes params:
+     filenick -- nick name of file
+     srow -- where to start from. If srow is negative, then the starting place is put
+        at the end of the file minus count
+    count -- number of rows to load
+    keyword -- optional parameter. If present instances of this keyword will be highlighted in log
+ -}
 loadRowsHandler :: EitherT Text (Handler IrcSnaplet IrcSnaplet) ()
 loadRowsHandler =
   do
     st <- lift $ getState
+    filenick <- getParamET "filenick" >>= (return . decodeUtf8)
     srow <- getParamET "srow" >>= (return . decodeUtf8) >>=
       readOrLeft "Can't parse srow"
     cnt <- getParamET "count" >>= (return . decodeUtf8) >>= readOrLeft "Can't parse count"
@@ -45,7 +49,7 @@ loadRowsHandler =
 
     if (cnt <= 0) then (EitherT $ return (Left "Count must be positive")) else return ()
 
-    allLns <- return (view (sfile . flines) st)
+    allLns <- hoistEither $ justOrError ("Can't find file for nick " `T.append` filenick)  $ st ^? (sfiles . (at filenick) . _Just . flines) 
     mranges <- return $ fmap (getRangesForKeyword st) mkeyword
 
     -- lift $ logError $ encodeUtf8 $ T.pack $  "myranges is "++
@@ -91,7 +95,7 @@ loadRowsHandler =
 
     let
       srow' = if srow < 0 then (Prelude.length allLns) - cnt else srow
-      lns = sliceSeq  srow' cnt (view (sfile . flines) st)
+      lns = sliceSeq  srow' cnt allLns
       in
       do
         -- lift $ logError $ encodeUtf8 $ T.pack $  "srow' is "++(show srow')

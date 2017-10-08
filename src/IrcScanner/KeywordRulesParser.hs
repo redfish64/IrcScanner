@@ -23,7 +23,7 @@ import Data.Text.IO as T(writeFile)
 backSlashChar :: ReadP String
 backSlashChar =
   do
-    char '\\'
+    _ <- char '\\'
     c <- satisfy $ const True --read any character
     return $ "\\"++[c]
 

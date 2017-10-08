@@ -11,7 +11,8 @@ module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..
             cranges,
             cendLine,
             scirs,
-            sfile,
+            emptyFile,
+            sfiles,
             cstate,
             IrcSnaplet(..),
             iheist,
@@ -26,6 +27,7 @@ module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..
             ckwFileLock
             ) where
 
+import Data.Map as M
 import Data.Text.ICU as I
 import Control.Monad.Trans.Reader
 import Control.Concurrent.MVar
@@ -135,15 +137,18 @@ data IFile = IFile {
 makeLenses ''IFile
 
 data IState = IState {
-  _scirs :: [CachedIndexResult],
-  _sfile :: IFile, --eventually maybe we'll support multiple files
-  _skwFileContents :: Text
+  _scirs :: [CachedIndexResult], -- ^ this is the cached result of all keyword scans
+  _sfiles :: Map Text IFile, -- ^ files we read from, as name to file
+  _skwFileContents :: Text -- ^ this is the raw source of the file configuring which keywords to search for
   } deriving (Show)
 
 makeLenses ''IState
 
+emptyFile :: IFile
+emptyFile = IFile { _flines = S.empty, _fcurrDay = fromGregorian 1970 1 1 }
+
 emptyIState :: IState
-emptyIState = IState { _scirs = [], _sfile = IFile { _flines = S.empty, _fcurrDay = fromGregorian 1970 1 1 }, _skwFileContents = "" }
+emptyIState = IState { _scirs = [], _sfiles = M.fromList [], _skwFileContents = "" }
 
 data IConfig = IConfig
   {

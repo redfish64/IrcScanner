@@ -8,7 +8,7 @@
     <table>
       <tr>
 	<td>
-	  <h2>#autonomic Irc Log</h2>
+	  <h2>#autonomic and #autonomic-dev Irc Logs</h2>
 	</td>
       </tr>
       <tr>

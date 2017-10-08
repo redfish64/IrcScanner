@@ -35,7 +35,7 @@ parseRegexWithFlags text =
       do
         s <- anyChar
         r <- many (try (char '\\' >> (char s)) <|> noneOf [s])
-        char s
+        _ <- char s
         flags <- many $ choice (Prelude.map char "i") --right now there is only one option, ignore case
         eof
         return (fmap parseFlag flags, pack r)

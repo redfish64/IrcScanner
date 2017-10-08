@@ -8,12 +8,15 @@ var LOOKUP = LOOKUP || (function(){
     var _ping_for_new_rows_timer_ms = 5000;
     var _ping_new_rows_count = 50;
     var _keyword;
+    var _nickname;
     
     return {
         init : function(args) {
 	    
 	    if(args.init_box_size) _add_rows_for_box = Math.trunc(init_box_size / 2);
 	    if(args.expand_box_amt) _expand_box_amt = args.expand_box_amt;
+
+	    _nickname = args.nickname
 	    
 	    $( window ).scroll(LOOKUP._refreshDisplayedBoxes)
         },

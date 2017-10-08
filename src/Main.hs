@@ -20,12 +20,13 @@ main =
 
     ic <- return $ IConfig i (hoursToTimeZone 0) "keywordRules.txt" mvar
 
-    es <- createInitialIState ic
+    es <- createInitialIState ic 
     case es of
       Left x -> putStrLn("Error: " ++ (unpack x))
       Right _ ->
         do
-          watchLogFile "test.log" ic
+          watchLogFile "autonomic.log" "test.log" ic
+--          watchLogFile "#autonomic-dev.log" "#autonomic-dev.log" ic
           (_, site, _) <- runSnaplet Nothing $ ircSnapletInit ic
           quickHttpServe site
   
