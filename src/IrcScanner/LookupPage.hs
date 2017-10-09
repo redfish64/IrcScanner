@@ -36,7 +36,7 @@ lookupPageSplices k =
 followLogHandler :: Handler IrcSnaplet IrcSnaplet ()
 followLogHandler =
   handleETHandler $ do
-    fnn <- getParamET "fnn" >>= (return . decodeUtf8)
+    fnn <- lift $ getTextParamOrDefault "fnn" "autonomic.log" -- default to autonomic.log
     lift $ renderWithSplices "lookup" (followLogSplices fnn )
     return ()
 
