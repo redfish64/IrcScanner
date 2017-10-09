@@ -9,7 +9,7 @@ import           System.IO as I
 import Data.Time.LocalTime(localTimeToUTC)--, hoursToTimeZone)
 import Parser.Irssi.Log.Util.Import(importIrssiDataContents)
 import IrcScanner.Index(addFileLines,addLogFileToState)
-import Data.Text as T (length,Text(..))--,unpack) 
+import Data.Text as T (length,Text)--,unpack) 
 import Data.Text.IO as T (hGetContents)
 
 --import IrcScanner.Index
@@ -34,7 +34,7 @@ watchLogFile fnn fn ic = do
     (addLogFileToState fnn) ic
   inotify <- initINotify
   wd <- liftIO $ newIORef (WatchData fnn fn 0)
-  liftIO $ addWatch inotify [Modify, CloseWrite] fn (handleEvent wd ic)
+  _ <- liftIO $ addWatch inotify [Modify, CloseWrite] fn (handleEvent wd ic)
   handleEvent wd ic Ignored
   return ()
    

@@ -36,10 +36,12 @@ retrieveHandler =
 
 cirSplice :: Monad x => CachedIndexResult -> Splice x
 cirSplice cir =
-  return $ toList $ fmap (\r -> X.Element "range" [("srow", row rstartPos r),
-                                 ("scol", col rstartPos r),
-                                 ("erow", row rendPos r),
-                                 ("ecol", col rendPos r)] [])
+  return $ toList $ fmap (\r -> X.Element "range" [
+                             ("fnn", view rfnn r),
+                             ("srow", row rstartPos r),
+                             ("scol", col rstartPos r),
+                             ("erow", row rendPos r),
+                             ("ecol", col rendPos r)] [])
          (_cranges cir)
   where
     row l r = pack $ show $ view (l . prow) r

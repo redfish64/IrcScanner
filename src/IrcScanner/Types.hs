@@ -7,6 +7,7 @@ module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..
             pcol,
             rstartPos,
             rendPos,
+            rfnn,
             cindex,
             cranges,
             cendLine,
@@ -98,6 +99,7 @@ data Pos = Pos {
 makeLenses ''Pos
 
 data Range = Range {
+  _rfnn :: Text,   -- ^ the file nick name the range appeared in
   _rstartPos :: Pos,
   _rendPos :: Pos
   } deriving (Show, Eq)
@@ -105,14 +107,15 @@ data Range = Range {
 makeLenses ''Range
 
 
---This is a cache of results from running indexes against
---the log file
---we don't use straight memoization because we need to
---incremenetally update the results when new lines come in
+{- | This is a cache of results from running indexes against
+     the log file
+     we don't use straight memoization because we need to
+     incremenetally update the results when new lines come in
+ -}
 data CachedIndexResult = CachedIndexResult {
   _cindex :: Index,
   _cranges :: Seq Range,
-  _cendLine :: Int -- the line number up to which we have scanned
+  _cendLine :: Int -- ^ the line number up to which we have scanned
   } deriving (Show)
 
 makeLenses ''CachedIndexResult

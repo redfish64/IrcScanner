@@ -26,7 +26,7 @@ import Data.Sequence as S
 import Parser.Irssi.Log.Types
 import qualified Numeric.Search as SE
 import Test.Hspec
-import IrcScanner.Index(getIrssiMessageText)
+--import IrcScanner.Index(getIrssiMessageText)
 
 
 {- | loads rows from the file
@@ -41,7 +41,7 @@ loadRowsHandler :: EitherT Text (Handler IrcSnaplet IrcSnaplet) ()
 loadRowsHandler =
   do
     st <- lift $ getState
-    filenick <- getParamET "filenick" >>= (return . decodeUtf8)
+    filenick <- getParamET "fnn" >>= (return . decodeUtf8)
     srow <- getParamET "srow" >>= (return . decodeUtf8) >>=
       readOrLeft "Can't parse srow"
     cnt <- getParamET "count" >>= (return . decodeUtf8) >>= readOrLeft "Can't parse count"
@@ -49,7 +49,7 @@ loadRowsHandler =
 
     if (cnt <= 0) then (EitherT $ return (Left "Count must be positive")) else return ()
 
-    allLns <- hoistEither $ justOrError ("Can't find file for nick " `T.append` filenick)  $ st ^? (sfiles . (at filenick) . _Just . flines) 
+    allLns <- hoistEither $ justOrError ("Can't find file for nick " `T.append` filenick) $ st ^? (sfiles . (at filenick) . _Just . flines) 
     mranges <- return $ fmap (getRangesForKeyword st) mkeyword
 
     -- lift $ logError $ encodeUtf8 $ T.pack $  "myranges is "++
@@ -170,39 +170,39 @@ rangesForLn ln rngs
 
 
 _testRanges :: Seq Range
-_testRanges = S.fromList $ fmap (\l -> Range (Pos l l) (Pos l (l+2))) [0..10]
+_testRanges = S.fromList $ fmap (\l -> Range "foo" (Pos l l) (Pos l (l+2))) [0..10]
 _testRanges2 :: Seq Range
-_testRanges2 = S.fromList $ fmap (\l -> Range (Pos (div l 2) $ l * 3) (Pos (div l 2) (l*3+2))) [0..10]
+_testRanges2 = S.fromList $ fmap (\l -> Range "foo" (Pos (div l 2) $ l * 3) (Pos (div l 2) (l*3+2))) [0..10]
               
 _test :: IO ()
 _test =
   hspec $ do
   describe "psMessage" $ do
     it "embedded keyword" $ do
-      (psMessage (rangesForLn 0 (S.fromList [Range (Pos 0 2) (Pos 0 4)]))  "abcdefghi")
+      (psMessage (rangesForLn 0 (S.fromList [Range "foo" (Pos 0 2) (Pos 0 4)]))  "abcdefghi")
         `shouldBe` [X.TextNode "ab",X.Element {X.elementTag = "span", X.elementAttrs = [("class","keyword")], X.elementChildren = [X.TextNode "cd"]},X.TextNode "efghi"]
     it "starts with keyword" $ do
-      (psMessage (rangesForLn 0 (S.fromList [Range (Pos 0 0) (Pos 0 4)]))  "abcdefghi")
+      (psMessage (rangesForLn 0 (S.fromList [Range "foo" (Pos 0 0) (Pos 0 4)]))  "abcdefghi")
         `shouldBe` [X.Element {X.elementTag = "span", X.elementAttrs = [("class","keyword")], X.elementChildren = [X.TextNode "abcd"]},X.TextNode "efghi"]
     it "ends with keyword" $ do        
-      (psMessage (rangesForLn 0 (S.fromList [Range (Pos 0 5) (Pos 0 9)]))  "abcdefghi")
+      (psMessage (rangesForLn 0 (S.fromList [Range "foo" (Pos 0 5) (Pos 0 9)]))  "abcdefghi")
         `shouldBe` [X.TextNode "abcde",X.Element {X.elementTag = "span", X.elementAttrs = [("class","keyword")], X.elementChildren = [X.TextNode "fghi"]}]
     it "handles ranges outside of line" $ do        
-      (psMessage (rangesForLn 5 (S.fromList [Range (Pos 0 8) (Pos 0 9),
-                                Range (Pos 5 5) (Pos 5 9)
-                               ,Range (Pos 8 2) (Pos 8 9)
+      (psMessage (rangesForLn 5 (S.fromList [Range "foo" (Pos 0 8) (Pos 0 9),
+                                Range "foo" (Pos 5 5) (Pos 5 9)
+                               ,Range "foo" (Pos 8 2) (Pos 8 9)
                                ]))  "abcdefghi")
         `shouldBe` [X.TextNode "abcde",X.Element {X.elementTag = "span", X.elementAttrs = [("class","keyword")], X.elementChildren = [X.TextNode "fghi"]}]
     it "handles being first range with ranges outside of line" $ do        
-      (psMessage (rangesForLn 0 (S.fromList [Range (Pos 0 5) (Pos 0 9),
-                                Range (Pos 5 3) (Pos 5 9)
-                               ,Range (Pos 8 1) (Pos 8 9)
+      (psMessage (rangesForLn 0 (S.fromList [Range "foo" (Pos 0 5) (Pos 0 9),
+                                Range "foo" (Pos 5 3) (Pos 5 9)
+                               ,Range "foo" (Pos 8 1) (Pos 8 9)
                                ]))  "abcdefghi")
         `shouldBe` [X.TextNode "abcde",X.Element {X.elementTag = "span", X.elementAttrs = [("class","keyword")], X.elementChildren = [X.TextNode "fghi"]}]
     it "handles being last range with ranges outside of line" $ do        
-      (psMessage (rangesForLn 8 (S.fromList [Range (Pos 0 0) (Pos 0 9),
-                                Range (Pos 5 3) (Pos 5 9)
-                               ,Range (Pos 8 5) (Pos 8 9)
+      (psMessage (rangesForLn 8 (S.fromList [Range "foo" (Pos 0 0) (Pos 0 9),
+                                Range "foo" (Pos 5 3) (Pos 5 9)
+                               ,Range "foo" (Pos 8 5) (Pos 8 9)
                                ]))  "abcdefghi")
         `shouldBe` [X.TextNode "abcde",X.Element {X.elementTag = "span", X.elementAttrs = [("class","keyword")], X.elementChildren = [X.TextNode "fghi"]}]
     it "handles multiple ranges in one line" $ do        

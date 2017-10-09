@@ -13,7 +13,12 @@
       </tr>
       <tr>
 	<td>
-	  <a href="followLog">View Latest IRC Log Entries</a>
+	  <a href="followLog?fnn=autonomic.log">View Latest IRC Log Entries for #autonomic</a>
+	</td>
+      </tr>
+      <tr>
+	<td>
+	  <a href="followLog?fnn=autonomic-dev.log">View Latest IRC Log Entries for #autonomic-dev</a>
 	</td>
       </tr>
       <tr>

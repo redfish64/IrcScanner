@@ -26,6 +26,7 @@ import qualified Data.List as LI(find)
 import Data.Text.IO as I(readFile)
 import IrcScanner.KeywordRulesParser
 import Prelude as P
+import Data.Map (foldWithKey)
 
 --tries running an index against the log and returns a result (without saving it)
 tryIndex :: Index -> IST IO [Range]
@@ -40,20 +41,11 @@ addIndex :: Index -> IST IO ()
 addIndex x = addIndexes [x]
 
 
--- | concats all file lines together in one seq
-getAllFileLines :: IState -> Seq ILine
-getAllFileLines is =
-  let
-    files = (L.view sfiles is)
-    in P.foldr (S.><) (fromList [])
-       (S.fmap (L.view flines) files)
 
 --builds a complete cached index result from scratch
 buildCachedIndexResult :: IState -> Index -> CachedIndexResult
 buildCachedIndexResult s i =
-  let
-    joinedLines = getAllFileLines s
-  in updateCachedIndexResult joinedLines (emptyCacheIndexResult i)
+  updateCachedIndexResult s (emptyCacheIndexResult i)
 
 
 -- returns only text from essages and actions
@@ -152,14 +144,25 @@ addFileLines k ls =
     (\s -> (refreshIndexCache (L.over (sfiles . (at k) . L._Just . flines) (\cls -> cls >< (fromList ls)) s), ()))
 
 
+-- | updates all the cached index results for new lines that were added
 refreshIndexCache :: IState -> IState
 refreshIndexCache is =
-         let lns = getAllFileLines is
-         in
-           L.over scirs (fmap (updateCachedIndexResult lns)) is
+  L.over scirs (P.map (updateCachedIndexResult is)) is
 
-updateCachedIndexResult :: Seq ILine -> CachedIndexResult -> CachedIndexResult
-updateCachedIndexResult f cir
+updateCachedIndexResult :: IState -> CachedIndexResult -> CachedIndexResult
+updateCachedIndexResult s cir =
+  let
+    files = (L.view sfiles s)
+  in
+    foldWithKey (\fnn file cir' -> updateCachedIndexResult' fnn (L.view flines file) cir')
+     cir files
+
+-- | updates a cached index result (for a keyword) for an updated sequence of lines.
+updateCachedIndexResult' :: Text -- ^ file nick name
+  -> Seq ILine  -- ^ total list of lines for file (only the ones not already scanned will be rescanned)
+  -> CachedIndexResult -- ^ cir to update
+  -> CachedIndexResult
+updateCachedIndexResult' fnn f cir
       | (_cendLine cir) >= (S.length f) = cir
       | otherwise =
         let
@@ -167,9 +170,9 @@ updateCachedIndexResult f cir
           lineText = getIrssiMessageText (_llogType (f `S.index` line))
           matches = runMatcher (_imatcher . _cindex $ cir) lineText
           cir' = cir { _cranges =
-                      (_cranges cir) >< (fromList (fmap (\(s,e) -> (Range (Pos line s) (Pos line e))) matches)) }
+                      (_cranges cir) >< (fromList (fmap (\(s,e) -> (Range fnn (Pos line s) (Pos line e))) matches)) }
         in
-          updateCachedIndexResult f (cir' { _cendLine = (_cendLine cir') + 1 })
+          updateCachedIndexResult' fnn f (cir' { _cendLine = (_cendLine cir') + 1 })
           
                                     
     

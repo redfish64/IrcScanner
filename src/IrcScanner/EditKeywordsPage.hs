@@ -58,7 +58,7 @@ editKeywordsSaveHandler = handleETHandler $ do
         do
           c <- ask
           lift $ saveKwFile rulesFileContents c
-      runIST' $ deleteAllIndexes >> mapM addIndex indexes
+      _ <- runIST' $ deleteAllIndexes >> mapM addIndex indexes
       runIST' $ updateIState (\s -> (s { _skwFileContents = rulesFileContents },()))
       render "edit_keywords_save_results"
 

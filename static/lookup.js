@@ -8,7 +8,7 @@ var LOOKUP = LOOKUP || (function(){
     var _ping_for_new_rows_timer_ms = 5000;
     var _ping_new_rows_count = 50;
     var _keyword;
-    var _nickname;
+    var _fnn;
     
     return {
         init : function(args) {
@@ -16,15 +16,15 @@ var LOOKUP = LOOKUP || (function(){
 	    if(args.init_box_size) _add_rows_for_box = Math.trunc(init_box_size / 2);
 	    if(args.expand_box_amt) _expand_box_amt = args.expand_box_amt;
 
-	    _nickname = args.nickname
+	    _fnn = args.fnn
 	    
 	    $( window ).scroll(LOOKUP._refreshDisplayedBoxes)
         },
 	//loads ranges for a particular keyword and creates boxes for them
 	updateBoxesForKeyword : function(keyword)
 	{
-	    $.get( "/retrieve?kw="+keyword, LOOKUP._resetBoxesForRanges );
 	    _keyword = keyword
+	    $.get( "/retrieve?kw="+keyword, LOOKUP._resetBoxesForRanges );
 	    //$.getJSON("/retrieve?kw="+_keyword, );
 	    //d.clear()
 	},
@@ -35,6 +35,7 @@ var LOOKUP = LOOKUP || (function(){
 	    _boxes[0] = {
 		id: 0,
 		rowsOffset: 0,
+		fnn : _fnn,
 		loading: false,
 		atBottom: true
 	    }
@@ -42,11 +43,11 @@ var LOOKUP = LOOKUP || (function(){
 
 	    LOOKUP._writeBoxesInPage()
 	    
-	    $.get( "/loadRows?srow=-1&count="+_latest_rows_to_load, LOOKUP._processLatestRows );
+	    $.get( "/loadRows?fnn="+_fnn+"&srow=-1&count="+_latest_rows_to_load, LOOKUP._processLatestRows );
 	},
 	//looks for new rows and adds them to the latest box for log follow mode
 	_pingForNewRows : function() {
-	    $.get( "/loadRows?srow="+_boxes[_boxes.length-1].erow+"&count="+_ping_new_rows_count, LOOKUP._processLatestRows );
+	    $.get( "/loadRows?fnn="+_fnn+"&srow="+_boxes[_boxes.length-1].erow+"&count="+_ping_new_rows_count, LOOKUP._processLatestRows );
 	},
 	//processes rows retrieved for log follow mode
 	_processLatestRows : function (result)
@@ -108,6 +109,7 @@ var LOOKUP = LOOKUP || (function(){
 		else {
 		    lastBox = {
 			id: currId++,
+			fnn: range.fnn,
 			srow: srow,
 			erow: erow,
 			rowsOffset: 0,
@@ -194,6 +196,7 @@ var LOOKUP = LOOKUP || (function(){
 		{
 		    _ranges.push(
 			{
+			    fnn: $(this).attr("fnn"),
 			    row: parseInt($(this).attr("srow")),
 			    scol: parseInt($(this).attr("scol")),
 			    ecol: parseInt($(this).attr("ecol"))
@@ -243,22 +246,22 @@ var LOOKUP = LOOKUP || (function(){
 	    if(box.rowsOffset != 0)
 	    {
 		box.loading = true;
-		LOOKUP._loadRows(box.srow, box.rowsOffset);
+		LOOKUP._loadRows(box.fnn,box.srow, box.rowsOffset);
 		return true;
 	    }
 
 	    if(box.rows.length < box.erow - box.srow)
 	    {
 		box.loading = true;
-		LOOKUP._loadRows(box.srow + box.rows.length, box.erow - box.srow - box.rows.length);
+		LOOKUP._loadRows(box.fnn,box.srow + box.rows.length, box.erow - box.srow - box.rows.length);
 		return true;
 	    }
 
 	    return false;
 	},
-	_loadRows : function (srow, count)
+	_loadRows : function (fnn, srow, count)
 	{
-	    $.get( "/loadRows?srow="+srow+"&count="+count+
+	    $.get( "/loadRows?fnn="+fnn+"&srow="+srow+"&count="+count+
 		   (_keyword ? "&keyword="+_keyword : ""), LOOKUP._processRows );
 	},
 	_processRows : function(result)
@@ -369,6 +372,8 @@ var LOOKUP = LOOKUP || (function(){
 	    var b = $("tr[box="+box.id+"]");
 	    $(b).find("#date").empty();
 	    $(b).find("#date").append(box.date);
+	    $(b).find("#fnn").empty();
+	    $(b).find("#fnn").append(box.fnn);
 	    var t = $(b).find("#text");
 	    t.empty();
 

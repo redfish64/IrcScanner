@@ -25,8 +25,8 @@ main =
       Left x -> putStrLn("Error: " ++ (unpack x))
       Right _ ->
         do
-          watchLogFile "autonomic.log" "test.log" ic
---          watchLogFile "#autonomic-dev.log" "#autonomic-dev.log" ic
+          watchLogFile "autonomic-dev.log" "autonomic-dev.log" ic
+          watchLogFile "autonomic.log" "autonomic.log" ic
           (_, site, _) <- runSnaplet Nothing $ ircSnapletInit ic
           quickHttpServe site
   

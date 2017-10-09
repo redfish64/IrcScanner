@@ -36,13 +36,15 @@ lookupPageSplices k =
 followLogHandler :: Handler IrcSnaplet IrcSnaplet ()
 followLogHandler =
   handleETHandler $ do
-    lift $ renderWithSplices "lookup" (followLogSplices  )
+    fnn <- getParamET "fnn" >>= (return . decodeUtf8)
+    lift $ renderWithSplices "lookup" (followLogSplices fnn )
     return ()
 
     
-followLogSplices :: Splices (SnapletISplice IrcSnaplet)
-followLogSplices =
+followLogSplices :: Text -> Splices (SnapletISplice IrcSnaplet)
+followLogSplices fnn =
   do
+    "fileNickName" ## textSplice fnn
     "keywordMode" ## (return [])
     "logFollowMode" ## (fmap elementChildren getParamNode)
 
