@@ -26,7 +26,8 @@ import qualified Data.List as LI(find)
 import Data.Text.IO as I(readFile)
 import IrcScanner.KeywordRulesParser
 import Prelude as P
-import Data.Map (foldWithKey)
+import Data.Map as M (foldWithKey,lookup,insert,Map)
+--import qualified Data.Map as M
 
 --tries running an index against the log and returns a result (without saving it)
 tryIndex :: Index -> IST IO [Range]
@@ -163,16 +164,24 @@ updateCachedIndexResult' :: Text -- ^ file nick name
   -> CachedIndexResult -- ^ cir to update
   -> CachedIndexResult
 updateCachedIndexResult' fnn f cir
-      | (_cendLine cir) >= (S.length f) = cir
+      | (getFnnEndLine) >= (S.length f) = cir
       | otherwise =
         let
-          line = (_cendLine cir)
+          line = getFnnEndLine
           lineText = getIrssiMessageText (_llogType (f `S.index` line))
           matches = runMatcher (_imatcher . _cindex $ cir) lineText
           cir' = cir { _cranges =
                       (_cranges cir) >< (fromList (fmap (\(s,e) -> (Range fnn (Pos line s) (Pos line e))) matches)) }
         in
-          updateCachedIndexResult' fnn f (cir' { _cendLine = (_cendLine cir') + 1 })
+          updateCachedIndexResult' fnn f (cir' { _cfnnEndLine = updateFnnEndLine (_cfnnEndLine cir') })
+  where
+    getFnnEndLine :: Int
+    getFnnEndLine = maybe 0 id (M.lookup fnn (_cfnnEndLine cir))
+    updateFnnEndLine :: Map Text Int -> Map Text Int
+    updateFnnEndLine fel =
+      let currEndLine = getFnnEndLine
+      in
+        insert fnn (currEndLine + 1) fel
           
                                     
     

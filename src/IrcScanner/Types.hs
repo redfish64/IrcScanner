@@ -10,7 +10,7 @@ module IrcScanner.Types(Matcher,Index(..),Pos(..),Range(..),CachedIndexResult(..
             rfnn,
             cindex,
             cranges,
-            cendLine,
+            cfnnEndLine,
             scirs,
             emptyFile,
             sfiles,
@@ -115,14 +115,14 @@ makeLenses ''Range
 data CachedIndexResult = CachedIndexResult {
   _cindex :: Index,
   _cranges :: Seq Range,
-  _cendLine :: Int -- ^ the line number up to which we have scanned
+  _cfnnEndLine :: Map Text Int -- ^ the line number up to which we have scanned for each fnn
   } deriving (Show)
 
 makeLenses ''CachedIndexResult
 
 
 emptyCacheIndexResult :: Index -> CachedIndexResult
-emptyCacheIndexResult i = CachedIndexResult i S.empty 0
+emptyCacheIndexResult i = CachedIndexResult i S.empty M.empty
 
 data ILine = ILine {
   _ltime :: UTCTime,
