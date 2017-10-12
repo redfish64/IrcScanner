@@ -101,7 +101,7 @@ var LOOKUP = LOOKUP || (function(){
 		var erow = range.row + _add_rows_for_box + 1;
 		if(srow < 0) srow = 0;
 
-		if(lastBox &&
+		if(lastBox && lastBox.fnn == range.fnn && 
 		   lastBox.erow >= srow)
 		{
 		    lastBox.erow = erow;
@@ -163,8 +163,9 @@ var LOOKUP = LOOKUP || (function(){
 		if(boxIndex >= 1)
 		{
 		    var lastBox = _boxes[boxIndex-1];
-		    
-		    newSrow = Math.max(lastBox.erow, newSrow);
+
+		    if(lastBox.fnn == box.fnn)
+			newSrow = Math.max(lastBox.erow, newSrow);
 		}
 
 		//update rows offset for the adjusted start position
@@ -180,7 +181,8 @@ var LOOKUP = LOOKUP || (function(){
 		{
 		    var nextBox = _boxes[boxIndex+1];
 		    
-		    box.erow = Math.min(nextBox.srow, box.erow);
+		    if(nextBox.fnn == box.fnn)
+			box.erow = Math.min(nextBox.srow, box.erow);
 		}
 	    }
 
@@ -203,6 +205,12 @@ var LOOKUP = LOOKUP || (function(){
 			});
 		}
 	    );
+
+	    _ranges.sort(function(a,b) {
+		c = a.fnn.localeCompare(b.fnn);
+		if(c != 0) return c;
+		return a.row - b.row;
+	    });
 
 	    //now update the boxes
 	    LOOKUP._setupBoxesForRanges();
@@ -262,9 +270,9 @@ var LOOKUP = LOOKUP || (function(){
 	_loadRows : function (fnn, srow, count)
 	{
 	    $.get( "/loadRows?fnn="+fnn+"&srow="+srow+"&count="+count+
-		   (_keyword ? "&keyword="+_keyword : ""), LOOKUP._processRows );
+		   (_keyword ? "&keyword="+_keyword : ""), function (r) { LOOKUP._processRows(fnn, r) } );
 	},
-	_processRows : function(result)
+	_processRows : function(fnn,result)
 	{
 	    var $xml = $(result)
 
@@ -277,7 +285,11 @@ var LOOKUP = LOOKUP || (function(){
 
 	    //get the box for the range of rows
 	    var box = binarySearchFind(_boxes,function(box)
-				       { return box.erow > fr.id })
+				       {
+					   var c = box.fnn.localeCompare(fnn);
+					   if (c > 0) return true;
+					   if (c < 0) return false;
+					   return box.erow > fr.id })
 	    if(!box)
 	    {
 		alert ("wheres the box? "+fr.id);
@@ -306,6 +318,11 @@ var LOOKUP = LOOKUP || (function(){
 	    box.contBelow = LOOKUP._continuesBelow(box);
 
 	    LOOKUP._redrawBox(box,newRowsStart, newRowsStart + rows.length);
+
+	    //if a box is at the end of a file, the rows returned won't reach
+	    //the erow, so we assume that we now have all the rows the server
+	    //knows about, and therefore we truncate erow
+	    box.erow = box.srow + box.rows.length
 
 	    if(box.contAbove)
 	    {
@@ -357,7 +374,7 @@ var LOOKUP = LOOKUP || (function(){
 	    {
 		return false;
 	    }
-	    return _boxes[box.id-1].erow == box.srow;
+	    return _boxes[box.id-1].fnn == box.fnn && _boxes[box.id-1].erow == box.srow;
 	},
 	_continuesBelow : function(box)
 	{
@@ -365,7 +382,7 @@ var LOOKUP = LOOKUP || (function(){
 	    {
 		return false;
 	    }
-	    return _boxes[box.id+1].srow == box.erow;
+	    return box.id > 0 && _boxes[box.id-1].fnn == box.fnn && _boxes[box.id+1].srow == box.erow;
 	},
 	_redrawBox : function(box, newRowsStart, newRowsEnd)
 	{
