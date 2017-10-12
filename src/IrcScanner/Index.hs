@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir,addIndex',createInitialIState,deleteAllIndexes,getIrssiMessageText,addLogFileToState) where
+module IrcScanner.Index(tryIndex,addIndex,addIndexes,getIndexes,deleteIndex,addFileLine, addFileLines, getIState, updateIState,lookupCir,addIndex',loadKwTemplateFile,deleteAllIndexes,getIrssiMessageText,addLogFileToState) where
 
 import Control.Lens.At (at)
 import Control.Lens.Setter ((.~))
@@ -223,13 +223,16 @@ runMatcher mr l =
 --         s <- liftIO $ readIORef (_cstate c)
 --         return s
 
-createInitialIState :: IConfig -> IO (Either Text IState)
-createInitialIState ic = --undefined
+--this updates the state held by an IORef inside IConfig by loading
+--the indexes from the keyword file
+loadKwTemplateFile :: IConfig -> EitherT Text IO ()
+loadKwTemplateFile ic = --undefined
   do
-    kwFileContents <- I.readFile (_crulesFile ic)
-    runReaderT (runEitherT $ doit kwFileContents) ic
+    kwFileContents <- lift $ I.readFile (_crulesFile ic)
+    v <- lift $ runReaderT (runEitherT $ doit kwFileContents) ic
+    hoistEither v --error out if v is left
   where
-    doit :: Text -> EIST IO IState
+    doit :: Text -> EIST IO ()
     doit kwFileContents = 
       do
         --load indexes from keyword file
@@ -239,8 +242,7 @@ createInitialIState ic = --undefined
 
         lift $ updateIState (\s -> (s { _skwFileContents = kwFileContents },()))
         
-        --get and return the state
-        lift $ getIState
+        return ()
     transformKwError :: [Text] -> Text
     transformKwError t = T.unlines $ fmap
       (\l -> "Error parsing " `append` (pack $ _crulesFile ic) `append` ": " `append` l)  t

@@ -11,21 +11,35 @@ import Data.Time
 import IrcScanner.LogWatcher
 --import Control.Concurrent (threadDelay)
 import Control.Concurrent.MVar(newMVar)
+import Control.Monad.Trans.Either
+import Control.Monad.Trans.Class
+import Control.Monad.Reader
+import Control.Lens
+import Control.Concurrent
+
+initState :: EitherT Text IO IConfig
+initState =
+  do
+    i <- lift $ newIORef emptyIState
+    mvar <- lift $ newMVar ()
+
+    ic <- return $ IConfig i (hoursToTimeZone 0) "keywordRules.txt" mvar
+
+    loadKwTemplateFile ic
+
+    return ic
 
 main :: IO ()
 main =
   do
-    i <- newIORef emptyIState
-    mvar <- newMVar ()
-
-    ic <- return $ IConfig i (hoursToTimeZone 0) "keywordRules.txt" mvar
-
-    es <- createInitialIState ic 
-    case es of
+    eic <- runEitherT $ initState
+    
+    case eic of
       Left x -> putStrLn("Error: " ++ (unpack x))
-      Right _ ->
+      Right ic ->
         do
           watchLogFile "autonomic-dev.log" "autonomic-dev.log" ic
+          --threadDelay $ 1000*1000
           watchLogFile "autonomic.log" "autonomic.log" ic
           (_, site, _) <- runSnaplet Nothing $ ircSnapletInit ic
           quickHttpServe site
