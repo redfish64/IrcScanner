@@ -1,1 +1,11 @@
-haul:RegexMatcher:/\bhaul\b/
+AutoNomic:RegexMatcher:/\bautonomic\b|\ba\.?n\.?o\.?n\b/
+Controlled Natural Language:RegexMatcher:/\bcnl\b|\bnat\w*\s+\lang\w*\b/i
+Open/Closed Phase:RegexMatcher:/\b(open|closed?)\s+phase\b/i
+Visualizer:RegexMatcher:/\bvisuali/i
+Quantification:RegexMatcher:/\bquantification/i
+Euler:RegexMatcher:/\beuler\b/i
+Abstract Syntax Tree:RegexMatcher:/\bAST\b|\babs\w*\s+syn\w*\s+tr\w*\b/i
+Guido Naudt's RDF Inference Engine:RegexMatcher:~\bguido\b|www\.agfa\.com/w3c/2002/02/thesis/thesis\.pdf~i
+Cubical Type Theory:RegexMatcher:/\bcub.* type|\bctt\b/
+UEFI:RegexMatcher:/\buefi\b/i
+Homotopy Type Theory:RegexMatcher:/\bhott\b|\bhomo\w*\s*type/i
