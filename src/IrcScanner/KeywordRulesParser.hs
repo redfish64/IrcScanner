@@ -14,7 +14,7 @@ import System.Directory(renameFile)
 import Data.Text.IO as T(writeFile)
 --import Control.Monad(sequence)
 -- ex file
--- AutoNomic:RegexMatcher:/\bautonomic\b|\ba\.?n\.?o\.?n\b/
+-- Nomiccoin:RegexMatcher:/\bnomiccoin\b|\ba\.?n\.?o\.?n\b/
 -- Cool:RegexMatcher:/\bcool\b/i
 -- Open/Closed Phase:RegexMatcher:/\b(open|closed?)\s+phase\b/i
 
@@ -126,16 +126,16 @@ _test =
   hspec $ do
   describe "kwLine" $ do
     it "the happy path" $ do
-      runState (runEitherT kwLine ) "AutoNomic:RegexMatcher:/\\bautonomic\\b|\\ba\\.?n\\.?o\\.?n\\b/"
+      runState (runEitherT kwLine ) "Nomiccoin:RegexMatcher:/\\bnomiccoin\\b|\\ba\\.?n\\.?o\\.?n\\b/"
         `shouldSatisfy`
         (\(v,_) -> 
            case v of
-             (Right x) -> (show x) == "Index {_idisplayName = \"AutoNomic\", _imatcher = Regex \"\\\\bautonomic\\\\b|\\\\ba\\\\.?n\\\\.?o\\\\.?n\\\\b\"}"
+             (Right x) -> (show x) == "Index {_idisplayName = \"Nomiccoin\", _imatcher = Regex \"\\\\bnomiccoin\\\\b|\\\\ba\\\\.?n\\\\.?o\\\\.?n\\\\b\"}"
              _ -> False
         )
   describe "kwFile" $ do
     it "the happy path" $ do
-      (show $ parseKwFile ["AutoNomic:RegexMatcher:/\\bautonomic\\b|\\ba\\.?n\\.?o\\.?n\\b/","Cool:RegexMatcher:/\\bcool\\b/i"])
+      (show $ parseKwFile ["Nomiccoin:RegexMatcher:/\\bnomiccoin\\b|\\ba\\.?n\\.?o\\.?n\\b/","Cool:RegexMatcher:/\\bcool\\b/i"])
         `shouldBe`
-        "Right [Index {_idisplayName = \"Cool\", _imatcher = Regex \"\\\\bcool\\\\b\"},Index {_idisplayName = \"AutoNomic\", _imatcher = Regex \"\\\\bautonomic\\\\b|\\\\ba\\\\.?n\\\\.?o\\\\.?n\\\\b\"}]"
+        "Right [Index {_idisplayName = \"Cool\", _imatcher = Regex \"\\\\bcool\\\\b\"},Index {_idisplayName = \"Nomiccoin\", _imatcher = Regex \"\\\\bnomiccoin\\\\b|\\\\ba\\\\.?n\\\\.?o\\\\.?n\\\\b\"}]"
    

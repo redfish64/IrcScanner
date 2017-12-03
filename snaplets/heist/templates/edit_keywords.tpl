@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>#autonomic Irc Log - Edit Keywords</title>
+    <title>#nomiccoin Irc Log - Edit Keywords</title>
     <link rel="stylesheet" href="/files/styles.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="/files/util.js"></script>

@@ -38,9 +38,9 @@ main =
       Left x -> putStrLn("Error: " ++ (unpack x))
       Right ic ->
         do
-          watchLogFile "autonomic-dev.log" "autonomic-dev.log" ic
+          --watchLogFile "nomiccoin-dev.log" "nomiccoin-dev.log" ic
           --threadDelay $ 1000*1000
-          watchLogFile "autonomic.log" "autonomic.log" ic
+          watchLogFile "nomiccoin.log" "nomiccoin.log" ic
           (_, site, _) <- runSnaplet Nothing $ ircSnapletInit ic
           quickHttpServe site
   

@@ -31,7 +31,7 @@ import Test.Hspec
 
 {- | loads rows from the file
      takes params:
-     filenick -- nick name of file
+     fnn -- nick name of file
      srow -- where to start from. If srow is negative, then the starting place is put
         at the end of the file minus count
     count -- number of rows to load

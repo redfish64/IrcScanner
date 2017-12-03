@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>#autonomic Irc Log</title>
+    <title>#nomiccoin Irc Log</title>
     <link rel="stylesheet" href="/files/styles.css">
   </head>
   <body>

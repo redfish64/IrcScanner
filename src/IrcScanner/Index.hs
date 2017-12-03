@@ -136,7 +136,7 @@ addFileLine :: Text -> ILine -> IST IO ()
 addFileLine n l = addFileLines n [l]
 
 -- | adds file lines to cache of a particular irc file (should be called by the log watcher)
-addFileLines :: Text -- ^ the nick name of the file, ex "#autonomic" for "../irclogs/#autonomic.log"
+addFileLines :: Text -- ^ the nick name of the file, ex "#nomiccoin" for "../irclogs/#nomiccoin.log"
   -> [ILine] -- ^ lines to add
   -> IST IO ()
 addFileLines k ls =
@@ -215,7 +215,7 @@ runMatcher mr l =
 --     createDemo :: EIST IO IState 
 --     createDemo = 
 --       do
---         addIndex' "AutoNomic" RegexMatcher "/\\bautonomic\\b/i"
+--         addIndex' "Nomiccoin" RegexMatcher "/\\bnomiccoin\\b/i"
 --         addIndex' "Cool" RegexMatcher "/cool/i"
 --         addIndex' "Open/Closed Phase" RegexMatcher "/"
         

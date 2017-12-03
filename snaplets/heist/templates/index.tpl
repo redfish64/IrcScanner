@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>#autonomic Irc Log</title>
+    <title>#nomiccoin Irc Log</title>
     <link rel="stylesheet" href="/files/styles.css">
   </head>
   <body>
     <table>
       <tr>
 	<td>
-	  <h2>#autonomic and #autonomic-dev Irc Logs</h2>
+	  <h2>#nomiccoin and #nomiccoin-dev Irc Logs</h2>
 	</td>
       </tr>
       <tr>
 	<td>
-	  <a href="followLog?fnn=autonomic.log">View Latest IRC Log Entries for #autonomic</a>
+	  <a href="followLog?fnn=nomiccoin.log">View Latest IRC Log Entries for #nomiccoin</a>
 	</td>
       </tr>
       <tr>
 	<td>
-	  <a href="followLog?fnn=autonomic-dev.log">View Latest IRC Log Entries for #autonomic-dev</a>
+	  <a href="followLog?fnn=nomiccoin-dev.log">View Latest IRC Log Entries for #nomiccoin-dev</a>
 	</td>
       </tr>
       <tr>
